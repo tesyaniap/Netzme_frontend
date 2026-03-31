@@ -23,6 +23,12 @@ interface BookPayload {
 
 export default {
 
+  // 📋 All available schedules (hari ini dan selanjutnya)
+  availableSchedules() {
+    const today = new Date().toISOString().split('T')[0]
+    return api.get('/transactions/schedules', { params: { date_from: today } })
+  },
+
   // 🔎 Search schedule
   search(payload: SearchPayload) {
     return api.post('/transactions/search', payload)

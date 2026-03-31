@@ -50,6 +50,7 @@ const currentTransaction = ref<any>(null)
 
 const openSearchDialog = () => {
   showSearchDialog.value = true
+  store.fetchAvailableSchedules()
 }
 
 const search = async () => {
@@ -104,6 +105,7 @@ const search = async () => {
 const selectSchedule = async (schedule: any) => {
   console.log('🎯 Schedule selected:', schedule)
   selectedSchedule.value = schedule
+  travel_date.value = schedule.travel_date
   selectedSeats.value = []
   selectedSeatNumbers.value = []
   
@@ -154,7 +156,9 @@ const proceedToPassengerForm = () => {
     identity_number: ''
   }))
   showSeatMapDialog.value = false
-  showPassengerForm.value = true
+  setTimeout(() => {
+    showPassengerForm.value = true
+  }, 300)
 }
 
 // Step 3: Book
@@ -547,7 +551,7 @@ onMounted(() => {
 
           <!-- SEARCH DIALOG -->
           <Dialog v-model:open="showSearchDialog">
-            <DialogContent>
+            <DialogContent class="max-w-2xl max-h-[85vh] overflow-y-auto">
               <DialogTitle>Pencarian Tiket</DialogTitle>
               <DialogDescription>
                 Masukkan kota asal, tujuan, dan tanggal keberangkatan
@@ -575,6 +579,43 @@ onMounted(() => {
                 <Button variant="outline" @click="showSearchDialog = false">
                   Batal
                 </Button>
+              </div>
+
+              <!-- Available Schedules -->
+              <div class="border-t pt-4 mt-2">
+                <h3 class="font-medium text-sm mb-3">Jadwal Tersedia</h3>
+                <div v-if="store.availableLoading" class="py-4 text-center text-sm text-muted-foreground">
+                  Memuat jadwal...
+                </div>
+                <div v-else-if="store.availableSchedules.length > 0" class="space-y-2 max-h-[300px] overflow-y-auto">
+                  <div
+                    v-for="schedule in store.availableSchedules"
+                    :key="schedule.id"
+                    class="border rounded-lg p-3 flex justify-between items-center hover:border-primary/50 hover:shadow-sm cursor-pointer transition-all"
+                    @click="selectSchedule(schedule); showSearchDialog = false"
+                  >
+                    <div>
+                      <div class="font-medium text-sm">{{ schedule.route }}</div>
+                      <div class="text-xs text-muted-foreground">
+                        {{ schedule.travel_date }} · Berangkat: {{ schedule.departure_time }}
+                      </div>
+                      <div class="font-semibold text-primary text-sm mt-0.5">
+                        Rp {{ parseFloat(schedule.price).toLocaleString('id-ID') }}
+                      </div>
+                    </div>
+                    <div class="text-right flex flex-col items-end gap-2">
+                      <span class="text-xs px-2 py-1 rounded-full font-medium"
+                        :class="(schedule.available_seats ?? 0) > 5 ? 'bg-green-100 text-green-700' : (schedule.available_seats ?? 0) > 0 ? 'bg-yellow-100 text-yellow-700' : 'bg-red-100 text-red-700'"
+                      >
+                        {{ schedule.available_seats ?? 0 }} / {{ schedule.total_seats ?? '-' }} kursi
+                      </span>
+                      <Button variant="secondary" size="sm">Pilih</Button>
+                    </div>
+                  </div>
+                </div>
+                <div v-else class="py-4 text-center text-sm text-muted-foreground">
+                  Tidak ada jadwal tersedia saat ini
+                </div>
               </div>
             </DialogContent>
           </Dialog>

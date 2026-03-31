@@ -4,6 +4,8 @@ import transactionService from '@/services/mitra/transaction.service'
 export const useTransactionStore = defineStore('transactionMitra', {
   state: () => ({
     schedules: [] as any[],
+    availableSchedules: [] as any[],
+    availableLoading: false,
     seatMap: [] as any[],
     seatMapData: null as any,
     transactionDetail: null as any,
@@ -25,6 +27,19 @@ export const useTransactionStore = defineStore('transactionMitra', {
   }),
 
   actions: {
+
+    // 📋 FETCH ALL AVAILABLE SCHEDULES
+    async fetchAvailableSchedules() {
+      this.availableLoading = true
+      try {
+        const res = await transactionService.availableSchedules()
+        this.availableSchedules = res.data.message?.schedules || []
+      } catch {
+        this.availableSchedules = []
+      } finally {
+        this.availableLoading = false
+      }
+    },
 
     // 🔎 SEARCH
     async search(payload: any) {
