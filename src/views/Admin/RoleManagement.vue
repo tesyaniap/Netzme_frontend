@@ -137,7 +137,11 @@ const expandedCategories = ref<Set<string>>(new Set())
 const groupedPermissions = computed(() => {
   const groups: Record<string, any[]> = {}
   allPermissions.value.forEach(permission => {
-    if (!permission?.name) return
+    // Validasi permission dan permission.name
+    if (!permission || typeof permission.name !== 'string' || !permission.name) {
+      console.warn('Invalid permission object:', permission)
+      return
+    }
     const category = permission.name.split('.')[0]
     if (!groups[category]) {
       groups[category] = []
@@ -150,9 +154,22 @@ const groupedPermissions = computed(() => {
 const categoryLabels: Record<string, string> = {
   users: 'User Management',
   roles: 'Role & Permission',
+  permissions: 'Permission Management',
+  mitra: 'Mitra Management',
   transactions: 'Transaksi',
   reports: 'Laporan',
   topups: 'Top Up',
+  balance: 'Balance & Saldo',
+  'fee-ledgers': 'Fee Ledger',
+  routes: 'Manajemen Rute',
+  cities: 'Manajemen Kota',
+  terminals: 'Manajemen Terminal',
+  schedules: 'Manajemen Jadwal',
+  vehicles: 'Manajemen Kendaraan',
+  seats: 'Manajemen Kursi',
+  tickets: 'Manajemen Tiket',
+  locations: 'Manajemen Lokasi',
+  dashboard: 'Dashboard'
 }
 
 onMounted(() => {
@@ -176,13 +193,24 @@ const fetchAllPermissions = async () => {
   try {
     const response = await api.get('/permissions')
     console.log('Permissions response:', response.data)
-    const data = response.data.data || response.data.message?.data || response.data
-    // Backend returns array of strings, convert to objects with id and name
-    allPermissions.value = Array.isArray(data) ? data.map((name: string, index: number) => ({
-      id: name,
-      name: name,
-      description: ''
-    })) : []
+    
+    // Backend returns {success: true, data: [{id, name, description}]}
+    const data = response.data.data || response.data.message || []
+    
+    if (Array.isArray(data)) {
+      // Backend returns array of objects with {id, name, description}
+      allPermissions.value = data
+        .filter(item => item && typeof item.name === 'string' && item.name.trim())
+        .map((permission: any) => ({
+          id: permission.id || permission.name, // Use ID if available, fallback to name
+          name: permission.name.trim(),
+          description: permission.description || ''
+        }))
+    } else {
+      console.warn('Permissions data is not an array:', data)
+      allPermissions.value = []
+    }
+    
     console.log('Parsed permissions:', allPermissions.value)
   } catch (error) {
     console.error('Failed to fetch permissions:', error)
@@ -195,8 +223,13 @@ const openPermissionDialog = (role: any) => {
   selectedRole.value = role
   const rolePermissions = role.permissions || []
   console.log('Role permissions:', rolePermissions)
-  // Backend returns array of permission names (strings)
-  selectedPermissions.value = Array.isArray(rolePermissions) ? rolePermissions : []
+  
+  // Backend returns array of permission objects with {id, name, description}
+  // Extract the IDs for selectedPermissions
+  selectedPermissions.value = Array.isArray(rolePermissions) 
+    ? rolePermissions.map((p: any) => p.id || p.name || p)
+    : []
+  
   console.log('Selected permission IDs:', selectedPermissions.value)
   expandedCategories.value = new Set()
   showPermissionDialog.value = true
@@ -230,15 +263,20 @@ const savePermissions = async () => {
   saving.value = true
   try {
     console.log('Sending permissions:', selectedPermissions.value)
+    // Backend expects array of permission IDs (integers)
+    const permissionIds = selectedPermissions.value.map(id => 
+      typeof id === 'string' && !isNaN(Number(id)) ? Number(id) : id
+    )
+    
     await api.post(`/roles/${selectedRole.value.id}/permissions`, {
-      permissions: selectedPermissions.value
+      permissions: permissionIds
     })
     toast({ title: 'Berhasil', description: 'Permission berhasil diperbarui' })
     showPermissionDialog.value = false
     fetchRoles()
   } catch (error: any) {
     console.error('Save permissions error:', error)
-    const errorMsg = error.message || 'Gagal memperbarui permission'
+    const errorMsg = error.response?.data?.message || error.message || 'Gagal memperbarui permission'
     toast({ title: 'Gagal', description: errorMsg, variant: 'destructive' })
   } finally {
     saving.value = false

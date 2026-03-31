@@ -64,6 +64,12 @@ const search = async () => {
   }
 
   try {
+    console.log('🔍 Starting search with params:', {
+      origin: origin.value,
+      destination: destination.value,
+      travel_date: travel_date.value
+    })
+    
     await store.search({
       origin: origin.value,
       destination: destination.value,
@@ -94,6 +100,7 @@ const search = async () => {
     showScheduleDialog.value = true
     console.log('✅ Schedule dialog opened:', showScheduleDialog.value)
   } catch (error: any) {
+    console.error('❌ Search error:', error)
     toast({
       title: 'Pencarian Gagal',
       description: error.message || 'Terjadi kesalahan saat mencari jadwal',
@@ -573,7 +580,7 @@ onMounted(() => {
               </div>
 
               <div class="flex gap-2">
-                <Button @click="search" :disabled="store.loading" class="flex-1">
+                <Button @click.prevent="search" :disabled="store.loading" class="flex-1">
                   {{ store.loading ? 'Mencari...' : 'Cari Tiket' }}
                 </Button>
                 <Button variant="outline" @click="showSearchDialog = false">
@@ -595,7 +602,7 @@ onMounted(() => {
                     @click="selectSchedule(schedule); showSearchDialog = false"
                   >
                     <div>
-                      <div class="font-medium text-sm">{{ schedule.route }}</div>
+                      <div class="font-medium text-sm">{{ schedule.vehicle?.name || 'Bus' }}</div>
                       <div class="text-xs text-muted-foreground">
                         {{ schedule.travel_date }} · Berangkat: {{ schedule.departure_time }}
                       </div>
@@ -636,7 +643,7 @@ onMounted(() => {
                   @click="selectSchedule(schedule)"
                 >
                   <div>
-                    <div class="font-medium">{{ schedule.route }}</div>
+                    <div class="font-medium">{{ schedule.vehicle?.name || 'Bus' }}</div>
                     <div class="text-sm text-muted-foreground">
                       Berangkat: {{ schedule.departure_time }}
                     </div>
@@ -827,7 +834,7 @@ onMounted(() => {
                   </div>
                   <div class="p-3 bg-muted/50 rounded-lg hover:bg-muted transition-colors">
                     <span class="text-sm text-muted-foreground block mb-1">Rute</span>
-                    <p class="font-medium">{{ selectedSchedule?.route }}</p>
+                    <p class="font-medium">{{ selectedSchedule?.vehicle?.name || 'Bus' }}</p>
                   </div>
                   <div class="p-3 bg-muted/50 rounded-lg hover:bg-muted transition-colors">
                     <span class="text-sm text-muted-foreground block mb-1">Tanggal Keberangkatan</span>

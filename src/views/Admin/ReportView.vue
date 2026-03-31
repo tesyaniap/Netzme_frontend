@@ -204,7 +204,7 @@ onMounted(() => {
 const fetchMitraList = async () => {
   loadingMitra.value = true
   try {
-    const response = await api.get('/v1/mitra')
+    const response = await api.get('/mitra')
     mitraList.value = [
       { id: 'all', name: 'Semua Mitra', email: 'Tampilkan semua' },
       ...response.data.data

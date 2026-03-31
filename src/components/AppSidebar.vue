@@ -13,7 +13,7 @@ import {
   SidebarMenuItem,
   SidebarRail,
 } from '@/components/ui/sidebar'
-import { Home, Users, Bus, User, Shield, FileText, Wallet } from 'lucide-vue-next'
+import { Home, Users, Bus, User, Shield, FileText, Wallet, MapPin, Calendar, Ticket, Car } from 'lucide-vue-next'
 
 const router = useRouter()
 const route = useRoute()
@@ -44,6 +44,26 @@ const navigationItems = [
     title: 'Role Management',
     icon: Shield,
     path: '/admin/role-management',
+  },
+  {
+    title: 'Manajemen Lokasi',
+    icon: MapPin,
+    path: '/admin/locations',
+  },
+  {
+    title: 'Manajemen Kendaraan',
+    icon: Car,
+    path: '/admin/vehicles',
+  },
+  {
+    title: 'Manajemen Jadwal',
+    icon: Calendar,
+    path: '/admin/schedules',
+  },
+  {
+    title: 'Manajemen Tiket',
+    icon: Ticket,
+    path: '/admin/tickets',
   },
   {
     title: 'Laporan',

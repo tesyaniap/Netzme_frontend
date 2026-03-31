@@ -41,16 +41,24 @@ watch(() => route.query.page, (newPage) => {
 const fetchTransactions = async (page = 1) => {
   loading.value = true
   try {
-    const response = await api.get(`/v1/reports/transactions?page=${page}&per_page=10`)
-    console.log('Full response:', response)
-    console.log('Response data:', response.data)
-    transactions.value = response.data.data || []
-    currentPage.value = response.data.current_page || 1
-    lastPage.value = response.data.last_page || 1
-    total.value = response.data.total || 0
-    console.log('Transactions count:', transactions.value.length)
+    console.log('Fetching transactions from API...')
+    const response = await api.get(`/reports/transactions?page=${page}&per_page=10`)
+    console.log('API Response:', response.data)
+    
+    if (response.data.status) {
+      transactions.value = response.data.data || []
+      currentPage.value = response.data.current_page || 1
+      lastPage.value = response.data.last_page || 1
+      total.value = response.data.total || 0
+      console.log('Transactions loaded successfully:', transactions.value.length)
+    }
   } catch (error) {
     console.error('Failed to fetch transactions:', error)
+    toast({
+      title: 'Error',
+      description: 'Gagal memuat data transaksi',
+      variant: 'destructive'
+    })
   } finally {
     loading.value = false
   }
