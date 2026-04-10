@@ -3,186 +3,270 @@
     <AppSidebar />
     <SidebarInset>
       <SiteHeader />
-      
-      <div class="flex flex-1 flex-col gap-4 p-4 md:gap-6 md:p-6">
-        <div class="flex items-center justify-between">
+
+      <div class="flex flex-1 flex-col gap-4 p-3 sm:gap-6 sm:p-6">
+
+        <!-- Page Header -->
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-0">
           <div>
-            <h1 class="text-3xl font-bold tracking-tight">Manajemen Jadwal</h1>
-            <p class="text-muted-foreground mt-1">Kelola jadwal perjalanan bus</p>
+            <h1 class="text-xl sm:text-2xl font-semibold text-foreground">Jadwal Perjalanan</h1>
+            <p class="text-xs sm:text-sm text-muted-foreground mt-0.5">Kelola jadwal keberangkatan bus</p>
           </div>
-          <Button @click="openScheduleDialog">
+          <Button @click="openScheduleDialog" class="w-full sm:w-auto">
             <Plus class="mr-2 h-4 w-4" />
             Tambah Jadwal
           </Button>
         </div>
 
         <!-- Filters -->
-        <Card>
-          <CardContent class="pt-6">
-            <div class="flex flex-col md:flex-row gap-4">
-              <div class="flex-1">
-                <Label>Filter Rute</Label>
-                <select v-model="routeFilter" @change="fetchSchedules" class="w-full rounded-md border px-3 py-2 text-sm">
-                  <option value="">Semua Rute</option>
-                  <option v-for="route in routes" :key="route.id" :value="route.id">
-                    {{ route.origin_city?.name }} → {{ route.destination_city?.name }}
-                  </option>
-                </select>
-              </div>
-              <div class="flex-1">
-                <Label>Filter Tanggal</Label>
-                <Input v-model="dateFilter" type="date" @change="fetchSchedules" />
-              </div>
-              <div class="flex items-end">
-                <Button @click="clearFilters" variant="outline">Reset</Button>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+        <div class="flex flex-col sm:flex-row gap-3">
+          <select
+            v-model="routeFilter"
+            @change="fetchSchedules"
+            class="flex h-9 rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors focus:outline-none focus:ring-1 focus:ring-ring flex-1"
+          >
+            <option value="">Semua Rute</option>
+            <option v-for="route in routes" :key="route.id" :value="route.id">
+              {{ route.origin_city?.name }} → {{ route.destination_city?.name }}
+            </option>
+          </select>
+          <Input v-model="dateFilter" type="date" @change="fetchSchedules" class="h-9 flex-1 sm:max-w-[200px]" />
+          <Button variant="outline" size="sm" @click="clearFilters" class="h-9 px-4 w-full sm:w-auto">Reset</Button>
+        </div>
 
+        <!-- Table Card -->
         <Card>
-          <CardHeader>
-            <CardTitle>Daftar Jadwal</CardTitle>
-            <CardDescription>{{ schedules.length }} jadwal tersedia</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div v-if="loading" class="text-center py-8">Loading...</div>
-            <div v-else-if="schedules.length === 0" class="text-center py-8 text-muted-foreground">
-              Tidak ada jadwal ditemukan
+          <CardContent class="p-0">
+            <div v-if="loading" class="flex items-center justify-center py-12 sm:py-16 text-sm text-muted-foreground">
+              Memuat data...
             </div>
-            <Table v-else>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Rute</TableHead>
-                  <TableHead>Kendaraan</TableHead>
-                  <TableHead>Tanggal</TableHead>
-                  <TableHead>Waktu</TableHead>
-                  <TableHead>Harga</TableHead>
-                  <TableHead class="text-right">Aksi</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                <TableRow v-for="schedule in schedules" :key="schedule.id">
-                  <TableCell>
-                    <div>
-                      <p class="font-medium">{{ schedule.route?.origin_city?.name }} → {{ schedule.route?.destination_city?.name }}</p>
-                      <p class="text-sm text-muted-foreground">{{ schedule.route?.departure_terminal?.name }} - {{ schedule.route?.arrival_terminal?.name }}</p>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <div>
-                      <p class="font-medium">{{ schedule.vehicle?.name }}</p>
-                      <p class="text-sm text-muted-foreground">{{ schedule.vehicle?.plate_number }}</p>
-                    </div>
-                  </TableCell>
-                  <TableCell>{{ formatDate(schedule.travel_date) }}</TableCell>
-                  <TableCell>
-                    <div>
-                      <p>{{ schedule.departure_time }}</p>
-                      <p class="text-sm text-muted-foreground">{{ schedule.arrival_time }}</p>
-                    </div>
-                  </TableCell>
-                  <TableCell>{{ formatCurrency(schedule.price) }}</TableCell>
-                  <TableCell class="text-right">
-                    <div class="flex gap-2 justify-end">
-                      <Button size="sm" variant="outline" @click="editSchedule(schedule)">Edit</Button>
-                      <Button size="sm" variant="destructive" @click="deleteSchedule(schedule.id)">Hapus</Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              </TableBody>
-            </Table>
+            <div v-else-if="schedules.length === 0" class="flex flex-col items-center justify-center py-12 sm:py-16 gap-2">
+              <p class="text-sm font-medium text-foreground">Belum ada jadwal</p>
+              <p class="text-xs text-muted-foreground text-center px-4">Klik "Tambah Jadwal" untuk membuat jadwal baru</p>
+            </div>
+            <div v-else class="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow class="border-b">
+                    <TableHead class="pl-3 sm:pl-6 min-w-[150px]">Rute</TableHead>
+                    <TableHead class="min-w-[120px]">Kendaraan</TableHead>
+                    <TableHead class="min-w-[100px]">Tanggal</TableHead>
+                    <TableHead class="min-w-[80px]">Jam</TableHead>
+                    <TableHead class="min-w-[100px]">Harga</TableHead>
+                    <TableHead class="pr-3 sm:pr-6 text-right min-w-[120px]">Aksi</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  <TableRow v-for="schedule in schedules" :key="schedule.id" class="hover:bg-muted/40 transition-colors">
+                    <TableCell class="pl-3 sm:pl-6">
+                      <p class="font-medium text-xs sm:text-sm">
+                        {{ schedule.route?.origin_city?.name }} → {{ schedule.route?.destination_city?.name }}
+                      </p>
+                      <p class="text-xs text-muted-foreground mt-0.5 hidden sm:block">
+                        {{ schedule.route?.departure_terminal?.name }} · {{ schedule.route?.arrival_terminal?.name }}
+                      </p>
+                    </TableCell>
+                    <TableCell>
+                      <p class="text-xs sm:text-sm font-medium">{{ schedule.vehicle?.name }}</p>
+                      <p class="text-xs text-muted-foreground mt-0.5 hidden sm:block">{{ schedule.vehicle?.plate_number }}</p>
+                    </TableCell>
+                    <TableCell class="text-xs sm:text-sm">{{ formatDate(schedule.travel_date) }}</TableCell>
+                    <TableCell>
+                      <p class="text-xs sm:text-sm font-medium">{{ schedule.departure_time?.substring(0,5) }}</p>
+                      <p class="text-xs text-muted-foreground mt-0.5 hidden sm:block"> {{ schedule.arrival_time?.substring(0,5) }}</p>
+                    </TableCell>
+                    <TableCell class="text-xs sm:text-sm font-medium">{{ formatCurrency(schedule.price) }}</TableCell>
+                    <TableCell class="pr-3 sm:pr-6 text-right">
+                      <div class="flex flex-col sm:flex-row gap-1 sm:gap-2 sm:justify-end">
+                        <Button size="sm" variant="outline" @click="editSchedule(schedule)" class="h-7 sm:h-8 px-2 sm:px-3 text-xs">Edit</Button>
+                        <Button size="sm" variant="destructive" @click="deleteSchedule(schedule.id)" class="h-7 sm:h-8 px-2 sm:px-3 text-xs">Hapus</Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                </TableBody>
+              </Table>
+            </div>
           </CardContent>
         </Card>
       </div>
     </SidebarInset>
 
-    <!-- Schedule Dialog -->
+    <!-- ── Schedule Dialog ── -->
     <Dialog v-model:open="showScheduleDialog">
-      <DialogContent class="max-w-2xl">
-        <DialogTitle>{{ isEdit ? 'Edit' : 'Tambah' }} Jadwal (Mode: {{ isEdit ? 'Edit' : 'Create' }})</DialogTitle>
-        <DialogDescription>{{ isEdit ? 'Ubah' : 'Tambahkan' }} jadwal perjalanan</DialogDescription>
-        
-        <div class="space-y-4 py-4">
-          <div class="grid grid-cols-2 gap-4">
-            <div class="space-y-2">
-              <Label>Rute</Label>
-              <select v-model="scheduleForm.route_id" class="w-full rounded-md border px-3 py-2 text-sm">
-                <option value="">Pilih Rute</option>
+      <DialogContent class="max-w-lg max-h-[90vh] overflow-y-auto">
+        <DialogTitle>{{ isEdit ? 'Edit Jadwal' : 'Tambah Jadwal' }}</DialogTitle>
+        <DialogDescription>{{ isEdit ? 'Ubah detail jadwal yang sudah ada.' : 'Buat jadwal keberangkatan baru.' }}</DialogDescription>
+
+        <div class="space-y-5 pt-2">
+
+          <!-- ── RUTE ── -->
+          <div class="space-y-2">
+            <div class="flex items-center justify-between">
+              <Label class="text-sm font-medium">Rute</Label>
+              <button
+                type="button"
+                @click="toggleRouteMode"
+                class="text-xs bg-gray-800 text-white px-2 py-1 rounded hover:bg-gray-700 transition-colors"
+              >
+                {{ routeMode === 'select' ? ' Buat rute baru' : ' Pilih rute yang ada' }}
+              </button>
+            </div>
+
+            <!-- Mode: pilih existing -->
+            <div v-if="routeMode === 'select'">
+              <select
+                v-model="scheduleForm.route_id"
+                class="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-ring"
+              >
+                <option value="">-- Pilih rute --</option>
                 <option v-for="route in routes" :key="route.id" :value="route.id">
                   {{ route.origin_city?.name }} → {{ route.destination_city?.name }}
                 </option>
               </select>
+
+              <!-- Preview rute terpilih -->
+              <div v-if="selectedRoute" class="mt-2 px-3 py-2 rounded-md bg-muted text-xs text-muted-foreground">
+                Terminal: {{ selectedRoute.departure_terminal?.name }} → {{ selectedRoute.arrival_terminal?.name }}
+              </div>
             </div>
-            <div class="space-y-2">
-              <Label>Kendaraan</Label>
-              <select v-model="scheduleForm.vehicle_id" class="w-full rounded-md border px-3 py-2 text-sm">
-                <option value="">Pilih Kendaraan</option>
-                <option v-for="vehicle in vehicles" :key="vehicle.id" :value="vehicle.id">
-                  {{ vehicle.name }} ({{ vehicle.plate_number }})
-                </option>
-              </select>
+
+            <!-- Mode: buat rute baru -->
+            <div v-else class="rounded-md border border-dashed p-4 space-y-3">
+              <div class="grid grid-cols-2 gap-3">
+                <div class="space-y-1.5">
+                  <Label class="text-xs text-muted-foreground">Kota asal</Label>
+                  <select
+                    v-model="newRoute.origin_city_id"
+                    @change="loadOriginTerminals"
+                    class="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-ring"
+                  >
+                    <option value="">Pilih kota</option>
+                    <option v-for="city in cities" :key="city.id" :value="city.id">{{ city.name }}</option>
+                  </select>
+                </div>
+                <div class="space-y-1.5">
+                  <Label class="text-xs text-muted-foreground">Terminal keberangkatan</Label>
+                  <select
+                    v-model="newRoute.departure_terminal_id"
+                    :disabled="!newRoute.origin_city_id"
+                    class="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-ring disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <option value="">Pilih terminal</option>
+                    <option v-for="t in originTerminals" :key="t.id" :value="t.id">{{ t.name }}</option>
+                  </select>
+                </div>
+                <div class="space-y-1.5">
+                  <Label class="text-xs text-muted-foreground">Kota tujuan</Label>
+                  <select
+                    v-model="newRoute.destination_city_id"
+                    @change="loadDestinationTerminals"
+                    class="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-ring"
+                  >
+                    <option value="">Pilih kota</option>
+                    <option v-for="city in cities" :key="city.id" :value="city.id">{{ city.name }}</option>
+                  </select>
+                </div>
+                <div class="space-y-1.5">
+                  <Label class="text-xs text-muted-foreground">Terminal kedatangan</Label>
+                  <select
+                    v-model="newRoute.arrival_terminal_id"
+                    :disabled="!newRoute.destination_city_id"
+                    class="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-ring disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <option value="">Pilih terminal</option>
+                    <option v-for="t in destinationTerminals" :key="t.id" :value="t.id">{{ t.name }}</option>
+                  </select>
+                </div>
+              </div>
+              <div class="space-y-1.5">
+                <Label class="text-xs text-muted-foreground">Jarak (km)</Label>
+                <Input v-model.number="newRoute.distance" type="number" placeholder="cth: 150" class="h-9" />
+              </div>
+              <Button
+                type="button"
+                size="sm"
+                class="w-full h-9"
+                @click="createRouteInline"
+                :disabled="creatingRoute"
+              >
+                {{ creatingRoute ? 'Menyimpan rute...' : 'Simpan & gunakan rute ini' }}
+              </Button>
             </div>
           </div>
 
-          <div class="space-y-2">
-            <Label>Tanggal Perjalanan</Label>
-            <Input v-model="scheduleForm.travel_date" type="date" />
-            <p class="text-xs text-muted-foreground">Kosongkan untuk jadwal template harian</p>
+          <!-- ── KENDARAAN ── -->
+          <div class="space-y-1.5">
+            <Label class="text-sm font-medium">Kendaraan</Label>
+            <select
+              v-model="scheduleForm.vehicle_id"
+              class="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-ring"
+            >
+              <option value="">-- Pilih kendaraan --</option>
+              <option v-for="v in vehicles" :key="v.id" :value="v.id">
+                {{ v.name }} · {{ v.plate_number }} ({{ v.seat_capacity }} kursi)
+              </option>
+            </select>
           </div>
 
+          <!-- ── TANGGAL ── -->
+          <div class="space-y-1.5">
+            <Label class="text-sm font-medium">Tanggal Perjalanan</Label>
+            <Input v-model="scheduleForm.travel_date" type="date" class="h-9" />
+            <p class="text-xs text-muted-foreground">Kosongkan jika jadwal berlaku harian</p>
+          </div>
+
+          <!-- ── JAM ── -->
           <div class="grid grid-cols-2 gap-4">
-            <div class="space-y-2">
-              <Label>Waktu Keberangkatan</Label>
-              <Input v-model="scheduleForm.departure_time" type="time" placeholder="14:30" />
-              <p class="text-xs text-muted-foreground">Format: HH:MM (24 jam)</p>
+            <div class="space-y-1.5">
+              <Label class="text-sm font-medium">Jam Berangkat</Label>
+              <Input v-model="scheduleForm.departure_time" type="time" class="h-9" />
             </div>
-            <div class="space-y-2">
-              <Label>Waktu Tiba</Label>
-              <Input v-model="scheduleForm.arrival_time" type="time" placeholder="18:45" />
-              <p class="text-xs text-muted-foreground">Format: HH:MM (24 jam)</p>
+            <div class="space-y-1.5">
+              <Label class="text-sm font-medium">Jam Tiba</Label>
+              <Input v-model="scheduleForm.arrival_time" type="time" class="h-9" />
             </div>
           </div>
 
-          <div class="space-y-2">
-            <Label>Harga Tiket</Label>
-            <Input v-model.number="scheduleForm.price" type="number" placeholder="150000" />
+          <!-- ── HARGA ── -->
+          <div class="space-y-1.5">
+            <Label class="text-sm font-medium">Harga Tiket (Rp)</Label>
+            <Input v-model.number="scheduleForm.price" type="number" placeholder="cth: 150000" class="h-9" />
           </div>
-
         </div>
 
-        <div class="flex justify-end gap-2">
+        <!-- Footer -->
+        <div class="flex justify-end gap-2 pt-4 border-t mt-2">
           <Button variant="outline" @click="showScheduleDialog = false">Batal</Button>
           <Button @click="submitSchedule" :disabled="submitting">
-            {{ submitting ? 'Menyimpan...' : 'Simpan' }}
+            {{ submitting ? 'Menyimpan...' : isEdit ? 'Simpan Perubahan' : 'Buat Jadwal' }}
           </Button>
         </div>
       </DialogContent>
     </Dialog>
-    <!-- Delete Confirmation Dialog -->
+
+    <!-- ── Delete Dialog ── -->
     <Dialog v-model:open="showDeleteDialog">
-      <DialogContent>
-        <DialogTitle>Konfirmasi Hapus</DialogTitle>
-        <DialogDescription>Yakin ingin menghapus jadwal ini? Tindakan ini tidak dapat dibatalkan.</DialogDescription>
-        
-        <div class="flex justify-end gap-2 mt-4">
+      <DialogContent class="max-w-sm">
+        <DialogTitle>Hapus Jadwal?</DialogTitle>
+        <DialogDescription>Jadwal yang dihapus tidak bisa dikembalikan.</DialogDescription>
+        <div class="flex justify-end gap-2 pt-2">
           <Button variant="outline" @click="showDeleteDialog = false">Batal</Button>
           <Button variant="destructive" @click="confirmDelete">Hapus</Button>
         </div>
       </DialogContent>
     </Dialog>
+
   </SidebarProvider>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
-import { Badge } from '@/components/ui/badge'
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog'
 import { Plus } from 'lucide-vue-next'
 import AppSidebar from '@/components/AppSidebar.vue'
@@ -192,11 +276,17 @@ import { useToast } from '@/components/ui/toast'
 
 const { toast } = useToast()
 
+// ── State ──
 const loading = ref(false)
 const submitting = ref(false)
+const creatingRoute = ref(false)
+
 const schedules = ref<any[]>([])
 const routes = ref<any[]>([])
 const vehicles = ref<any[]>([])
+const cities = ref<any[]>([])
+const originTerminals = ref<any[]>([])
+const destinationTerminals = ref<any[]>([])
 
 const showScheduleDialog = ref(false)
 const showDeleteDialog = ref(false)
@@ -206,38 +296,49 @@ const scheduleToDelete = ref<number | null>(null)
 
 const routeFilter = ref('')
 const dateFilter = ref('')
+const routeMode = ref<'select' | 'create'>('select')
 
 const scheduleForm = ref({
-  route_id: '',
-  vehicle_id: '',
+  route_id: '' as string | number,
+  vehicle_id: '' as string | number,
   travel_date: '',
   departure_time: '',
   arrival_time: '',
   price: 0
 })
 
+const newRoute = ref({
+  origin_city_id: '',
+  destination_city_id: '',
+  departure_terminal_id: '',
+  arrival_terminal_id: '',
+  distance: 0
+})
+
+// ── Computed ──
+const selectedRoute = computed(() =>
+  routes.value.find(r => r.id == scheduleForm.value.route_id) ?? null
+)
+
+// ── Lifecycle ──
 onMounted(() => {
   fetchSchedules()
   fetchRoutes()
   fetchVehicles()
+  fetchCities()
 })
 
+// ── Fetch helpers ──
 const fetchSchedules = async () => {
   loading.value = true
   try {
     const params: Record<string, any> = {}
     if (routeFilter.value) params.route_id = routeFilter.value
     if (dateFilter.value) params.travel_date = dateFilter.value
-
-    const response = await api.get('/schedules', { params })
-    
-    // Handle both response formats
-    if (response.data.success || response.data.status) {
-      schedules.value = response.data.data || []
-    }
-  } catch (error) {
-    console.error('Failed to fetch schedules:', error)
-    toast({ title: 'Error', description: 'Gagal memuat data jadwal', variant: 'destructive' })
+    const res = await api.get('/schedules', { params })
+    schedules.value = res.data.data || []
+  } catch {
+    toast({ title: 'Gagal memuat jadwal', variant: 'destructive' })
   } finally {
     loading.value = false
   }
@@ -245,20 +346,79 @@ const fetchSchedules = async () => {
 
 const fetchRoutes = async () => {
   try {
-    const response = await api.get('/routes')
-    routes.value = response.data.data || []
-  } catch (error) {
-    console.error('Failed to fetch routes:', error)
-  }
+    const res = await api.get('/routes')
+    routes.value = res.data.data || []
+  } catch {}
 }
 
 const fetchVehicles = async () => {
   try {
-    const response = await api.get('/vehicles')
-    vehicles.value = response.data.data || []
-  } catch (error) {
-    console.error('Failed to fetch vehicles:', error)
+    const res = await api.get('/vehicles')
+    vehicles.value = res.data.data || []
+  } catch {}
+}
+
+const fetchCities = async () => {
+  try {
+    const res = await api.get('/cities')
+    cities.value = res.data.data || []
+  } catch {}
+}
+
+const loadOriginTerminals = async () => {
+  originTerminals.value = []
+  newRoute.value.departure_terminal_id = ''
+  if (!newRoute.value.origin_city_id) return
+  try {
+    const res = await api.get('/terminals', { params: { city_id: newRoute.value.origin_city_id } })
+    originTerminals.value = res.data.data || []
+  } catch {}
+}
+
+const loadDestinationTerminals = async () => {
+  destinationTerminals.value = []
+  newRoute.value.arrival_terminal_id = ''
+  if (!newRoute.value.destination_city_id) return
+  try {
+    const res = await api.get('/terminals', { params: { city_id: newRoute.value.destination_city_id } })
+    destinationTerminals.value = res.data.data || []
+  } catch {}
+}
+
+// ── Dialog helpers ──
+const openScheduleDialog = () => {
+  isEdit.value = false
+  selectedSchedule.value = null
+  scheduleForm.value = { route_id: '', vehicle_id: '', travel_date: '', departure_time: '', arrival_time: '', price: 0 }
+  routeMode.value = 'select'
+  resetNewRoute()
+  showScheduleDialog.value = true
+}
+
+const editSchedule = (schedule: any) => {
+  isEdit.value = true
+  selectedSchedule.value = schedule
+  scheduleForm.value = {
+    route_id: schedule.route_id,
+    vehicle_id: schedule.vehicle_id,
+    travel_date: schedule.travel_date?.split('T')[0] ?? '',
+    departure_time: schedule.departure_time?.substring(0, 5) ?? '',
+    arrival_time: schedule.arrival_time?.substring(0, 5) ?? '',
+    price: Number(schedule.price)
   }
+  routeMode.value = 'select'
+  showScheduleDialog.value = true
+}
+
+const toggleRouteMode = () => {
+  routeMode.value = routeMode.value === 'select' ? 'create' : 'select'
+  if (routeMode.value === 'select') resetNewRoute()
+}
+
+const resetNewRoute = () => {
+  newRoute.value = { origin_city_id: '', destination_city_id: '', departure_terminal_id: '', arrival_terminal_id: '', distance: 0 }
+  originTerminals.value = []
+  destinationTerminals.value = []
 }
 
 const clearFilters = () => {
@@ -267,185 +427,111 @@ const clearFilters = () => {
   fetchSchedules()
 }
 
-const openScheduleDialog = () => {
-  console.log('Open new schedule dialog')
-  isEdit.value = false
-  console.log('isEdit set to:', isEdit.value)
-  
-  scheduleForm.value = {
-    route_id: '',
-    vehicle_id: '',
-    travel_date: '',
-    departure_time: '',
-    arrival_time: '',
-    price: 0
+// ── Route inline create ──
+const createRouteInline = async () => {
+  const { origin_city_id, destination_city_id, departure_terminal_id, arrival_terminal_id } = newRoute.value
+  if (!origin_city_id || !destination_city_id || !departure_terminal_id || !arrival_terminal_id) {
+    toast({ title: 'Validasi', description: 'Lengkapi semua field rute', variant: 'destructive' })
+    return
   }
-  
-  selectedSchedule.value = null
-  console.log('Form reset for new schedule')
-  showScheduleDialog.value = true
+  if (origin_city_id === destination_city_id) {
+    toast({ title: 'Validasi', description: 'Kota asal dan tujuan tidak boleh sama', variant: 'destructive' })
+    return
+  }
+  creatingRoute.value = true
+  try {
+    const originCity = cities.value.find(c => c.id == origin_city_id)
+    const destCity = cities.value.find(c => c.id == destination_city_id)
+    const res = await api.post('/routes', {
+      ...newRoute.value,
+      name: `${originCity?.name} - ${destCity?.name}`
+    })
+    await fetchRoutes()
+    scheduleForm.value.route_id = res.data.data.id
+    routeMode.value = 'select'
+    resetNewRoute()
+    toast({ title: 'Rute dibuat', description: `${originCity?.name} → ${destCity?.name}` })
+  } catch (e: any) {
+    toast({ title: 'Error', description: e.response?.data?.message || 'Gagal membuat rute', variant: 'destructive' })
+  } finally {
+    creatingRoute.value = false
+  }
 }
 
-const editSchedule = (schedule: any) => {
-  console.log('Edit schedule called with:', schedule)
-  isEdit.value = true
-  console.log('isEdit set to:', isEdit.value)
-  
-  scheduleForm.value = {
-    route_id: schedule.route_id,
-    vehicle_id: schedule.vehicle_id,
-    travel_date: schedule.travel_date ? schedule.travel_date.split('T')[0] : '', // Format date for input
-    departure_time: schedule.departure_time ? schedule.departure_time.substring(0, 5) : '', // Remove seconds: 16:00:00 -> 16:00
-    arrival_time: schedule.arrival_time ? schedule.arrival_time.substring(0, 5) : '', // Remove seconds: 22:00:00 -> 22:00
-    price: Number(schedule.price)
-  }
-  
-  console.log('Form data set to:', scheduleForm.value)
-  selectedSchedule.value = schedule
-  console.log('Selected schedule set to:', selectedSchedule.value)
-  showScheduleDialog.value = true
-}
-
+// ── Submit schedule ──
 const submitSchedule = async () => {
-  // Validate required fields
-  if (!scheduleForm.value.route_id || !scheduleForm.value.vehicle_id || 
-      !scheduleForm.value.departure_time || !scheduleForm.value.arrival_time || 
-      !scheduleForm.value.price) {
-    toast({ title: 'Error', description: 'Semua field wajib diisi', variant: 'destructive' })
+  if (!scheduleForm.value.route_id) {
+    toast({ title: 'Validasi', description: 'Pilih rute terlebih dahulu', variant: 'destructive' })
     return
   }
-
-  // Validate time format (H:i)
-  const timeRegex = /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/
-  if (!timeRegex.test(scheduleForm.value.departure_time)) {
-    toast({ title: 'Error', description: 'Format waktu keberangkatan tidak valid (gunakan HH:MM)', variant: 'destructive' })
+  if (!scheduleForm.value.vehicle_id || !scheduleForm.value.departure_time || !scheduleForm.value.arrival_time || !scheduleForm.value.price) {
+    toast({ title: 'Validasi', description: 'Semua field wajib diisi', variant: 'destructive' })
     return
   }
-  if (!timeRegex.test(scheduleForm.value.arrival_time)) {
-    toast({ title: 'Error', description: 'Format waktu tiba tidak valid (gunakan HH:MM)', variant: 'destructive' })
-    return
-  }
-
-  console.log('Original times:', {
-    departure: scheduleForm.value.departure_time,
-    arrival: scheduleForm.value.arrival_time
-  })
-
   submitting.value = true
   try {
-    const payload = { ...scheduleForm.value }
-    
-    console.log('Original travel_date from form:', scheduleForm.value.travel_date)
-    console.log('Travel date type:', typeof scheduleForm.value.travel_date)
-    console.log('Travel date length:', scheduleForm.value.travel_date?.length)
-    
-    // Don't delete travel_date if it's empty - send it as null or empty string
-    if (!payload.travel_date || payload.travel_date.trim() === '') {
-      console.log('Setting travel_date to null (template schedule)')
-      payload.travel_date = null // Send null for template schedules
-    } else {
-      console.log('Keeping travel_date:', payload.travel_date)
+    const payload = {
+      ...scheduleForm.value,
+      travel_date: scheduleForm.value.travel_date || null,
+      departure_time: formatTime(scheduleForm.value.departure_time),
+      arrival_time: formatTime(scheduleForm.value.arrival_time)
     }
-
-    // Ensure time format is correct
-    payload.departure_time = formatTimeForAPI(payload.departure_time)
-    payload.arrival_time = formatTimeForAPI(payload.arrival_time)
-
-    console.log('Original form times:', {
-      departure: scheduleForm.value.departure_time,
-      arrival: scheduleForm.value.arrival_time
-    })
-    console.log('Formatted times for API:', {
-      departure: payload.departure_time,
-      arrival: payload.arrival_time
-    })
-    console.log('Full payload before send:', JSON.stringify(payload, null, 2))
-    console.log('Is edit mode:', isEdit.value)
-    console.log('Selected schedule ID:', selectedSchedule.value?.id)
-
     if (isEdit.value) {
       await api.put(`/schedules/${selectedSchedule.value.id}`, payload)
-      toast({ title: 'Berhasil', description: 'Jadwal berhasil diupdate' })
+      toast({ title: 'Berhasil', description: 'Jadwal diperbarui' })
     } else {
       await api.post('/schedules', payload)
-      toast({ title: 'Berhasil', description: 'Jadwal berhasil ditambahkan' })
+      toast({ title: 'Berhasil', description: 'Jadwal ditambahkan' })
     }
     showScheduleDialog.value = false
-    isEdit.value = false // Reset edit mode
-    selectedSchedule.value = null // Reset selected schedule
+    isEdit.value = false
+    selectedSchedule.value = null
     fetchSchedules()
-  } catch (error: any) {
-    const errorMsg = error.response?.data?.message || error.message || 'Gagal menyimpan jadwal'
-    toast({ title: 'Error', description: errorMsg, variant: 'destructive' })
+  } catch (e: any) {
+    toast({ title: 'Error', description: e.response?.data?.message || 'Gagal menyimpan', variant: 'destructive' })
   } finally {
     submitting.value = false
   }
 }
 
-const deleteSchedule = async (id: number) => {
-  showDeleteDialog.value = true
+// ── Delete ──
+const deleteSchedule = (id: number) => {
   scheduleToDelete.value = id
+  showDeleteDialog.value = true
 }
 
 const confirmDelete = async () => {
   if (!scheduleToDelete.value) return
   try {
     await api.delete(`/schedules/${scheduleToDelete.value}`)
-    toast({ title: 'Berhasil', description: 'Jadwal berhasil dihapus' })
+    toast({ title: 'Berhasil', description: 'Jadwal dihapus' })
     fetchSchedules()
-  } catch (error: any) {
-    toast({ title: 'Error', description: error.message || 'Gagal menghapus jadwal', variant: 'destructive' })
+  } catch {
+    toast({ title: 'Error', description: 'Gagal menghapus jadwal', variant: 'destructive' })
   } finally {
     showDeleteDialog.value = false
     scheduleToDelete.value = null
   }
 }
 
+// ── Formatters ──
 const formatDate = (date: string) => {
-  if (!date || date === 'null' || date === null || date === undefined) return 'Template Harian'
-  
+  if (!date) return 'Harian'
   try {
-    let dateObj
-    if (date.includes('T')) {
-      dateObj = new Date(date)
-    } else {
-      dateObj = new Date(date + 'T00:00:00')
-    }
-    
-    if (isNaN(dateObj.getTime())) {
-      return 'Template Harian'
-    }
-    
-    return dateObj.toLocaleDateString('id-ID', {
-      day: 'numeric',
-      month: 'long',
-      year: 'numeric'
+    return new Date(date.includes('T') ? date : date + 'T00:00:00').toLocaleDateString('id-ID', {
+      day: 'numeric', month: 'short', year: 'numeric'
     })
-  } catch (error) {
-    return 'Template Harian'
+  } catch {
+    return 'Harian'
   }
 }
 
-const formatCurrency = (amount: number) => {
-  return new Intl.NumberFormat('id-ID', {
-    style: 'currency',
-    currency: 'IDR',
-    minimumFractionDigits: 0
-  }).format(amount)
-}
+const formatCurrency = (amount: number) =>
+  new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(amount)
 
-const formatTimeForAPI = (time: string) => {
-  // Laravel H:i format expects: 00:00, 01:30, 14:45, 23:59
-  // WITH leading zeros for hours (00-23)
+const formatTime = (time: string) => {
   if (!time) return time
-  
-  // Remove seconds if present: 16:00:00 -> 16:00
-  const timeParts = time.split(':')
-  if (timeParts.length >= 2) {
-    const hours = parseInt(timeParts[0], 10)
-    const minutes = parseInt(timeParts[1], 10)
-    return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`
-  }
-  return time
+  const [h, m] = time.split(':')
+  return `${h.padStart(2, '0')}:${(m || '00').padStart(2, '0')}`
 }
 </script>

@@ -90,6 +90,7 @@
                     <th class="text-left">Nominal</th>
                     <th class="text-left">Metode</th>
                     <th class="text-left">Status</th>
+                    <th class="text-left">Aksi</th>
                   </tr>
                 </thead>
 
@@ -114,16 +115,13 @@
                         {{ topup.status }}
                       </span>
                     </td>
+                    <td>
+                      <Button size="sm" variant="outline" class="h-7 text-xs" @click="openDetail(topup)">Detail</Button>
+                    </td>
                   </tr>
 
                   <tr v-if="!topupStore.topups || topupStore.topups.length === 0">
-
-                    <td
-                      colspan="4"
-                      class="py-4 text-center text-muted-foreground"
-                    >
-                      Belum ada data top up
-                    </td>
+                    <td colspan="5" class="py-4 text-center text-muted-foreground">Belum ada data top up</td>
                   </tr>
                 </tbody>
               </table>
@@ -160,6 +158,47 @@
         </div>
       </div>
     </SidebarInset>
+
+    <!-- Detail Dialog -->
+    <Dialog v-model:open="showDetailDialog">
+      <DialogContent class="max-w-md">
+        <DialogTitle>Detail Top Up</DialogTitle>
+        <DialogDescription>Informasi permintaan top up</DialogDescription>
+        <div v-if="selectedTopup" class="space-y-3 py-2">
+          <div class="grid grid-cols-2 gap-3 text-sm">
+            <div>
+              <p class="text-muted-foreground">Tanggal</p>
+              <p class="font-medium">{{ new Date(selectedTopup.created_at).toLocaleDateString('id-ID') }}</p>
+            </div>
+            <div>
+              <p class="text-muted-foreground">Nominal</p>
+              <p class="font-medium">Rp {{ Number(selectedTopup.amount).toLocaleString('id-ID') }}</p>
+            </div>
+            <div>
+              <p class="text-muted-foreground">Metode</p>
+              <p class="font-medium">{{ selectedTopup.payment_method }}</p>
+            </div>
+            <div>
+              <p class="text-muted-foreground">Status</p>
+              <span :class="{
+                'text-yellow-600 font-medium': selectedTopup.status === 'pending',
+                'text-green-600 font-medium': selectedTopup.status === 'success',
+                'text-red-600 font-medium': selectedTopup.status === 'rejected',
+              }">{{ selectedTopup.status }}</span>
+            </div>
+          </div>
+
+          <div v-if="selectedTopup.status === 'rejected' && (selectedTopup.reject_reason || selectedTopup.rejection_reason)"
+            class="p-3 bg-destructive/10 border border-destructive/20 rounded-lg space-y-1">
+            <p class="text-xs font-semibold text-destructive">Alasan Penolakan</p>
+            <p class="text-sm text-destructive">{{ selectedTopup.reject_reason || selectedTopup.rejection_reason }}</p>
+          </div>
+        </div>
+        <div class="flex justify-end pt-2">
+          <Button variant="outline" @click="showDetailDialog = false">Tutup</Button>
+        </div>
+      </DialogContent>
+    </Dialog>
   </SidebarProvider>
 </template>
 
@@ -168,6 +207,7 @@ import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog'
 import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar'
 import SiteHeader from '@/components/SiteHeader.vue'
 import SidebarMitra from '@/components/SidebarMitra.vue'
@@ -186,6 +226,13 @@ const { toast } = useToast()
 const amount = ref<number | null>(null)
 const paymentMethod = ref('transfer')
 const proofFile = ref<File | null>(null)
+const showDetailDialog = ref(false)
+const selectedTopup = ref<any>(null)
+
+const openDetail = (topup: any) => {
+  selectedTopup.value = topup
+  showDetailDialog.value = true
+}
 
 const onFileChange = (event: Event) => {
   const target = event.target as HTMLInputElement | null

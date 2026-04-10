@@ -237,16 +237,9 @@ const handleEditUser = async () => {
     showEditDialog.value = false
     formData.value = { nama: '', email: '', role: '', instansi: '', password: '' }
     editingUser.value = null
-    toast({
-      title: 'Berhasil',
-      description: 'User berhasil diupdate',
-    })
+    toast({ title: 'Berhasil', description: 'User berhasil diperbarui' })
   } catch (error) {
-    toast({
-      title: 'Gagal',
-      description: 'Gagal mengupdate user',
-      variant: 'destructive',
-    })
+    toast({ title: 'Gagal memperbarui user', variant: 'destructive' })
   }
 }
 

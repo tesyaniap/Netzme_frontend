@@ -1,22 +1,63 @@
 import { api } from './api.service'
-import type { Ticket, RescheduleTicketRequest } from '@/types/ticket.types'
-import type { ApiResponse } from '@/types/api.types'
 
-class TicketService {
-  async getById(id: number): Promise<ApiResponse<Ticket>> {
-    const response = await api.get<ApiResponse<Ticket>>(`/tickets/${id}`)
-    return response.data
-  }
+const ticketService = {
+  // 📋 GET ALL TICKETS
+  getTickets(page: number = 1, filters: any = {}) {
+    return api.get('/reports/transactions', {
+      params: {
+        page,
+        per_page: 10,
+        status: 'issued',
+        ...filters
+      }
+    })
+  },
 
-  async getTicketData(id: number): Promise<ApiResponse<any>> {
-    const response = await api.get<ApiResponse<any>>(`/tickets/${id}/data`)
-    return response.data
-  }
+  // 🔍 GET TICKET DETAIL
+  getTicketDetail(ticketId: number) {
+    return api.get(`/tickets/${ticketId}`)
+  },
 
-  async reschedule(id: number, data: RescheduleTicketRequest): Promise<ApiResponse<Ticket>> {
-    const response = await api.post<ApiResponse<Ticket>>(`/tickets/${id}/reschedule`, data)
-    return response.data
+  // 🖨️ GET TICKET DATA FOR PRINTING
+  getTicketData(ticketId: number) {
+    return api.get(`/tickets/${ticketId}/data`)
+  },
+
+  // 📅 GET AVAILABLE SCHEDULES FOR RESCHEDULE
+  getAvailableSchedules(ticketId: number) {
+    return api.get('/tickets/reschedule/schedules', {
+      params: { ticket_id: ticketId }
+    })
+  },
+
+  // 🪑 GET AVAILABLE SEATS FOR SCHEDULE
+  getAvailableSeats(scheduleId: number) {
+    return api.get('/tickets/reschedule/seats', {
+      params: { schedule_id: scheduleId }
+    })
+  },
+
+  // 💰 CALCULATE RESCHEDULE FEE
+  calculateRescheduleFee(payload: any) {
+    return api.post('/tickets/reschedule/calculate-fee', payload)
+  },
+
+  // 🔄 PROCESS RESCHEDULE
+  rescheduleTicket(payload: any) {
+    return api.post('/tickets/reschedule', payload)
+  },
+
+  // 📜 GET RESCHEDULE HISTORY
+  getRescheduleHistory(ticketId: number) {
+    return api.get(`/tickets/${ticketId}/reschedule-history`)
+  },
+
+  // 🔍 GET RESCHEDULE-ABLE TICKETS
+  getRescheduleableTickets(page: number = 1) {
+    return api.get('/tickets/reschedule/available', {
+      params: { page, per_page: 10 }
+    })
   }
 }
 
-export const ticketService = new TicketService()
+export default ticketService

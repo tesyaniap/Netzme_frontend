@@ -48,12 +48,7 @@ const routes: RouteRecordRaw[] = [
     path: '/admin/role-management',
     component: () => import('@/views/Admin/RoleManagement.vue'),
     meta: { requiresAuth: true, role: 'admin' },
-  },
-  {
-    path: '/admin/role-permissions',
-    component: () => import('@/views/Admin/RolePermissions.vue'),
-    meta: { requiresAuth: true, role: 'admin' },
-  },
+  }, 
   {
     path: '/admin/locations',
     name: 'LocationManagement',

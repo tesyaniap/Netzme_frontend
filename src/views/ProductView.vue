@@ -10,47 +10,49 @@
       <SiteHeader />
       
       <div class="flex flex-1 flex-col">
-        <div class="flex flex-1 flex-col gap-4 p-4 md:gap-6 md:p-6">
+        <div class="flex flex-1 flex-col gap-3 p-3 sm:gap-4 sm:p-4 md:gap-6 md:p-6">
           <!-- Page Header -->
-          <div class="flex items-center justify-between">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-0">
             <div>
-              <h1 class="text-3xl font-bold tracking-tight">Products</h1>
-              <p class="text-muted-foreground mt-1">
+              <h1 class="text-2xl sm:text-3xl font-bold tracking-tight">Products</h1>
+              <p class="text-muted-foreground mt-1 text-sm sm:text-base">
                 Manage your product inventory
               </p>
             </div>
             <Dialog v-model:open="dialogOpen">
               <DialogTrigger as-child>
-                <Button @click="openCreateDialog">
+                <Button @click="openCreateDialog" class="w-full sm:w-auto">
                   Add Product
                 </Button>
               </DialogTrigger>
-              <DialogContent>
-                <DialogTitle>{{ editingProduct ? 'Edit Product' : 'Create Product' }}</DialogTitle>
-                <DialogDescription>
+              <DialogContent class="max-w-lg max-h-[90vh] overflow-y-auto mx-4">
+                <DialogTitle class="text-lg sm:text-xl">{{ editingProduct ? 'Edit Product' : 'Create Product' }}</DialogTitle>
+                <DialogDescription class="text-sm">
                   {{ editingProduct ? 'Update product information' : 'Add a new product to your inventory' }}
                 </DialogDescription>
-                <form @submit.prevent="handleSubmit" class="space-y-4 mt-4">
+                <form @submit.prevent="handleSubmit" class="space-y-3 sm:space-y-4 mt-4">
                   <div class="space-y-2">
-                    <Label for="name">Name</Label>
+                    <Label for="name" class="text-sm">Name</Label>
                     <Input
                       id="name"
                       v-model="formData.name"
                       placeholder="Product name"
                       required
+                      class="text-sm"
                     />
                   </div>
                   <div class="space-y-2">
-                    <Label for="description">Description</Label>
+                    <Label for="description" class="text-sm">Description</Label>
                     <Input
                       id="description"
                       v-model="formData.description"
                       placeholder="Product description"
                       required
+                      class="text-sm"
                     />
                   </div>
                   <div class="space-y-2">
-                    <Label for="price">Price</Label>
+                    <Label for="price" class="text-sm">Price</Label>
                     <Input
                       id="price"
                       v-model.number="formData.price"
@@ -58,23 +60,25 @@
                       step="0.01"
                       placeholder="0.00"
                       required
+                      class="text-sm"
                     />
                   </div>
                   <div class="space-y-2">
-                    <Label for="stock">Stock</Label>
+                    <Label for="stock" class="text-sm">Stock</Label>
                     <Input
                       id="stock"
                       v-model.number="formData.stock"
                       type="number"
                       placeholder="0"
                       required
+                      class="text-sm"
                     />
                   </div>
-                  <div class="flex gap-2 justify-end">
-                    <Button type="button" variant="outline" @click="dialogOpen = false">
+                  <div class="flex flex-col sm:flex-row gap-2 justify-end">
+                    <Button type="button" variant="outline" @click="dialogOpen = false" class="text-sm">
                       Cancel
                     </Button>
-                    <Button type="submit" :disabled="productStore.loading">
+                    <Button type="submit" :disabled="productStore.loading" class="text-sm">
                       {{ productStore.loading ? 'Saving...' : 'Save' }}
                     </Button>
                   </div>
@@ -89,68 +93,73 @@
           <!-- Products Table -->
           <Card>
             <CardContent class="p-0">
-              <div v-if="productStore.loading && productStore.items.length === 0" class="flex items-center justify-center p-12">
-                <p class="text-muted-foreground">Loading products...</p>
+              <div v-if="productStore.loading && productStore.items.length === 0" class="flex items-center justify-center p-8 sm:p-12">
+                <p class="text-muted-foreground text-sm">Loading products...</p>
               </div>
 
-              <div v-else-if="productStore.items.length === 0" class="flex flex-col items-center justify-center p-12">
-                <p class="text-muted-foreground mb-4">No products found</p>
-                <Button @click="openCreateDialog">Add your first product</Button>
+              <div v-else-if="productStore.items.length === 0" class="flex flex-col items-center justify-center p-8 sm:p-12">
+                <p class="text-muted-foreground mb-4 text-sm">No products found</p>
+                <Button @click="openCreateDialog" class="text-sm">Add your first product</Button>
               </div>
 
               <div v-else>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>ID</TableHead>
-                      <TableHead>Name</TableHead>
-                      <TableHead>Description</TableHead>
-                      <TableHead>Price</TableHead>
-                      <TableHead>Stock</TableHead>
-                      <TableHead class="text-right">Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    <TableRow v-for="product in productStore.items" :key="product.id">
-                      <TableCell class="font-medium">{{ product.id }}</TableCell>
-                      <TableCell>{{ product.name }}</TableCell>
-                      <TableCell>{{ product.description }}</TableCell>
-                      <TableCell>${{ product.price.toFixed(2) }}</TableCell>
-                      <TableCell>{{ product.stock }}</TableCell>
-                      <TableCell class="text-right">
-                        <div class="flex gap-2 justify-end">
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            @click="openEditDialog(product)"
-                          >
-                            Edit
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="destructive"
-                            @click="handleDelete(product.id)"
-                          >
-                            Delete
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  </TableBody>
-                </Table>
+                <div class="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead class="min-w-[60px]">ID</TableHead>
+                        <TableHead class="min-w-[120px]">Name</TableHead>
+                        <TableHead class="min-w-[150px]">Description</TableHead>
+                        <TableHead class="min-w-[80px]">Price</TableHead>
+                        <TableHead class="min-w-[60px]">Stock</TableHead>
+                        <TableHead class="text-right min-w-[120px]">Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      <TableRow v-for="product in productStore.items" :key="product.id">
+                        <TableCell class="font-medium text-xs sm:text-sm">{{ product.id }}</TableCell>
+                        <TableCell class="text-xs sm:text-sm">{{ product.name }}</TableCell>
+                        <TableCell class="text-xs sm:text-sm">{{ product.description }}</TableCell>
+                        <TableCell class="text-xs sm:text-sm">${{ product.price.toFixed(2) }}</TableCell>
+                        <TableCell class="text-xs sm:text-sm">{{ product.stock }}</TableCell>
+                        <TableCell class="text-right">
+                          <div class="flex flex-col sm:flex-row gap-1 sm:gap-2 sm:justify-end">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              @click="openEditDialog(product)"
+                              class="text-xs h-7 px-2"
+                            >
+                              Edit
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="destructive"
+                              @click="handleDelete(product.id)"
+                              class="text-xs h-7 px-2"
+                            >
+                              Delete
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    </TableBody>
+                  </Table>
+                </div>
 
                 <!-- Pagination -->
-                <div class="flex items-center justify-between border-t p-4">
-                  <div class="text-sm text-muted-foreground">
+                <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between border-t p-3 sm:p-4 gap-3 sm:gap-0">
+                  <div class="text-xs sm:text-sm text-muted-foreground">
                     Page {{ productStore.pagination.current_page }} of {{ productStore.pagination.last_page }}
                     ({{ productStore.pagination.total }} total items)
                   </div>
-                  <div class="flex gap-2">
+                  <div class="flex gap-2 w-full sm:w-auto">
                     <Button
                       size="sm"
                       variant="outline"
                       :disabled="productStore.pagination.current_page === 1"
                       @click="productStore.prevPage()"
+                      class="flex-1 sm:flex-none text-xs"
                     >
                       Previous
                     </Button>
@@ -159,6 +168,7 @@
                       variant="outline"
                       :disabled="productStore.pagination.current_page === productStore.pagination.last_page"
                       @click="productStore.nextPage()"
+                      class="flex-1 sm:flex-none text-xs"
                     >
                       Next
                     </Button>

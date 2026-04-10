@@ -4,13 +4,13 @@
     <SidebarInset>
       <SiteHeader />
       
-      <div class="flex flex-1 flex-col gap-4 p-4 md:gap-6 md:p-6">
-        <div class="flex items-center justify-between">
+      <div class="flex flex-1 flex-col gap-3 p-3 sm:gap-4 sm:p-4 md:gap-6 md:p-6">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-0">
           <div>
-            <h1 class="text-3xl font-bold tracking-tight">Manajemen Kendaraan</h1>
-            <p class="text-muted-foreground mt-1">Kelola kendaraan dan kursi bus</p>
+            <h1 class="text-2xl sm:text-3xl font-bold tracking-tight">Manajemen Kendaraan</h1>
+            <p class="text-muted-foreground mt-1 text-sm sm:text-base">Kelola kendaraan dan kursi bus</p>
           </div>
-          <Button @click="openVehicleDialog">
+          <Button @click="openVehicleDialog" class="w-full sm:w-auto">
             <Plus class="mr-2 h-4 w-4" />
             Tambah Kendaraan
           </Button>
@@ -22,54 +22,57 @@
             <CardDescription>{{ vehicles.length }} kendaraan terdaftar</CardDescription>
           </CardHeader>
           <CardContent>
-            <div v-if="loading" class="text-center py-8">Loading...</div>
-            <div v-else-if="vehicles.length === 0" class="text-center py-8 text-muted-foreground">
+            <div v-if="loading" class="text-center py-6 sm:py-8 text-sm">Loading...</div>
+            <div v-else-if="vehicles.length === 0" class="text-center py-6 sm:py-8 text-muted-foreground text-sm sm:text-base">
               Belum ada kendaraan
             </div>
-            <Table v-else>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Nama Kendaraan</TableHead>
-                  <TableHead>Nomor Plat</TableHead>
-                  <TableHead>Partner</TableHead>
-                  <TableHead>Kapasitas</TableHead>
-                  <TableHead>Layout</TableHead>
-                  <TableHead>Kursi</TableHead>
-                  <TableHead class="text-right">Aksi</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                <TableRow v-for="vehicle in vehicles" :key="vehicle.id">
-                  <TableCell class="font-medium">{{ vehicle.name }}</TableCell>
-                  <TableCell>{{ vehicle.plate_number }}</TableCell>
-                  <TableCell>{{ vehicle.partner?.name || '-' }}</TableCell>
-                  <TableCell>{{ vehicle.seat_capacity }} kursi</TableCell>
-                  <TableCell>
-                    <Badge variant="outline">{{ vehicle.seat_layout }}</Badge>
-                  </TableCell>
-                  <TableCell>
-                    <div class="flex items-center gap-2">
-                      <span>{{ vehicle.seats_count || 0 }} kursi</span>
-                      <Button 
-                        v-if="!vehicle.seats_count" 
-                        size="sm" 
-                        variant="outline" 
-                        @click="generateSeats(vehicle)"
-                      >
-                        Generate
-                      </Button>
-                    </div>
-                  </TableCell>
-                  <TableCell class="text-right">
-                    <div class="flex gap-2 justify-end">
-                      <Button size="sm" variant="outline" @click="viewSeats(vehicle)">Kursi</Button>
-                      <Button size="sm" variant="outline" @click="editVehicle(vehicle)">Edit</Button>
-                      <Button size="sm" variant="destructive" @click="deleteVehicle(vehicle.id)">Hapus</Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              </TableBody>
-            </Table>
+            <div v-else class="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead class="min-w-[120px]">Nama Kendaraan</TableHead>
+                    <TableHead class="min-w-[100px]">Nomor Plat</TableHead>
+                    <TableHead class="min-w-[100px]">Partner</TableHead>
+                    <TableHead class="min-w-[80px]">Kapasitas</TableHead>
+                    <TableHead class="min-w-[80px]">Layout</TableHead>
+                    <TableHead class="min-w-[80px]">Kursi</TableHead>
+                    <TableHead class="text-right min-w-[150px]">Aksi</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  <TableRow v-for="vehicle in vehicles" :key="vehicle.id">
+                    <TableCell class="font-medium text-sm">{{ vehicle.name }}</TableCell>
+                    <TableCell class="text-sm">{{ vehicle.plate_number }}</TableCell>
+                    <TableCell class="text-sm">{{ vehicle.partner?.name || '-' }}</TableCell>
+                    <TableCell class="text-sm">{{ vehicle.seat_capacity }} kursi</TableCell>
+                    <TableCell>
+                      <Badge variant="outline" class="text-xs">{{ vehicle.seat_layout }}</Badge>
+                    </TableCell>
+                    <TableCell>
+                      <div class="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">
+                        <span class="text-xs sm:text-sm">{{ vehicle.seats_count || 0 }} kursi</span>
+                        <Button 
+                          v-if="!vehicle.seats_count" 
+                          size="sm" 
+                          variant="outline" 
+                          @click="generateSeats(vehicle)"
+                          class="text-xs h-6 px-2"
+                        >
+                          Generate
+                        </Button>
+                      </div>
+                    </TableCell>
+                    <TableCell class="text-right">
+                      <div class="flex flex-col sm:flex-row gap-1 sm:gap-2 sm:justify-end">
+                        <Button size="sm" variant="outline" @click="viewSeats(vehicle)" class="text-xs h-7 px-2">Kursi</Button>
+                        <Button size="sm" variant="outline" @click="editVehicle(vehicle)" class="text-xs h-7 px-2">Edit</Button>
+                        <Button size="sm" variant="destructive" @click="deleteVehicle(vehicle.id)" class="text-xs h-7 px-2">Hapus</Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                </TableBody>
+              </Table>
+            </div>
           </CardContent>
         </Card>
       </div>
@@ -77,21 +80,21 @@
 
     <!-- Vehicle Dialog -->
     <Dialog v-model:open="showVehicleDialog">
-      <DialogContent>
-        <DialogTitle>{{ isEdit ? 'Edit' : 'Tambah' }} Kendaraan</DialogTitle>
-        <DialogDescription>{{ isEdit ? 'Ubah' : 'Tambahkan' }} data kendaraan</DialogDescription>
+      <DialogContent class="max-w-lg max-h-[90vh] overflow-y-auto mx-4">
+        <DialogTitle class="text-lg sm:text-xl">{{ isEdit ? 'Edit' : 'Tambah' }} Kendaraan</DialogTitle>
+        <DialogDescription class="text-sm">{{ isEdit ? 'Ubah' : 'Tambahkan' }} data kendaraan</DialogDescription>
         
-        <div class="space-y-4 py-4">
+        <div class="space-y-3 sm:space-y-4 py-4">
           <div class="space-y-2">
-            <Label>Nama Kendaraan</Label>
-            <Input v-model="vehicleForm.name" placeholder="Contoh: Bus Ekonomi 01" />
+            <Label class="text-sm">Nama Kendaraan</Label>
+            <Input v-model="vehicleForm.name" placeholder="Contoh: Bus Ekonomi 01" class="text-sm" />
           </div>
           <div class="space-y-2">
-            <Label>Nomor Plat</Label>
-            <Input v-model="vehicleForm.plate_number" placeholder="Contoh: B 1234 ABC" />
+            <Label class="text-sm">Nomor Plat</Label>
+            <Input v-model="vehicleForm.plate_number" placeholder="Contoh: B 1234 ABC" class="text-sm" />
           </div>
           <div class="space-y-2">
-            <Label>Partner/Mitra</Label>
+            <Label class="text-sm">Partner/Mitra</Label>
             <select v-model="vehicleForm.partner_id" class="w-full rounded-md border px-3 py-2 text-sm">
               <option value="">Pilih Partner</option>
               <option v-for="partner in partners" :key="partner.id" :value="partner.id">
@@ -100,11 +103,11 @@
             </select>
           </div>
           <div class="space-y-2">
-            <Label>Kapasitas Kursi</Label>
-            <Input v-model.number="vehicleForm.seat_capacity" type="number" placeholder="40" />
+            <Label class="text-sm">Kapasitas Kursi</Label>
+            <Input v-model.number="vehicleForm.seat_capacity" type="number" placeholder="40" class="text-sm" />
           </div>
           <div class="space-y-2">
-            <Label>Layout Kursi</Label>
+            <Label class="text-sm">Layout Kursi</Label>
             <select v-model="vehicleForm.seat_layout" class="w-full rounded-md border px-3 py-2 text-sm">
               <option value="">Pilih Layout</option>
               <option value="2-2">2-2 (Ekonomi)</option>
@@ -115,9 +118,9 @@
           </div>
         </div>
 
-        <div class="flex justify-end gap-2">
-          <Button variant="outline" @click="showVehicleDialog = false">Batal</Button>
-          <Button @click="submitVehicle" :disabled="submitting">
+        <div class="flex flex-col sm:flex-row justify-end gap-2">
+        <Button variant="outline" @click="showVehicleDialog = false" class="text-sm">Batal</Button>
+          <Button @click="submitVehicle" :disabled="submitting" class="text-sm">
             {{ submitting ? 'Menyimpan...' : 'Simpan' }}
           </Button>
         </div>
@@ -126,37 +129,37 @@
 
     <!-- Seats Dialog -->
     <Dialog v-model:open="showSeatsDialog">
-      <DialogContent class="max-w-4xl">
-        <DialogTitle>Kursi - {{ selectedVehicle?.name }}</DialogTitle>
-        <DialogDescription>Layout kursi kendaraan</DialogDescription>
+      <DialogContent class="max-w-4xl max-h-[90vh] overflow-y-auto mx-4">
+        <DialogTitle class="text-lg sm:text-xl">Kursi - {{ selectedVehicle?.name }}</DialogTitle>
+        <DialogDescription class="text-sm">Layout kursi kendaraan</DialogDescription>
         
-        <div v-if="loadingSeats" class="text-center py-8">Loading...</div>
-        <div v-else-if="seats.length === 0" class="text-center py-8">
-          <p class="text-muted-foreground mb-4">Belum ada kursi yang di-generate</p>
-          <Button @click="generateSeats(selectedVehicle)">Generate Kursi</Button>
+        <div v-if="loadingSeats" class="text-center py-6 sm:py-8 text-sm">Loading...</div>
+        <div v-else-if="seats.length === 0" class="text-center py-6 sm:py-8">
+          <p class="text-muted-foreground mb-4 text-sm">Belum ada kursi yang di-generate</p>
+          <Button @click="generateSeats(selectedVehicle)" class="text-sm">Generate Kursi</Button>
         </div>
         <div v-else class="space-y-4">
-          <div class="flex justify-between items-center">
-            <p class="text-sm text-muted-foreground">{{ seats.length }} kursi tersedia</p>
-            <Button size="sm" variant="outline" @click="regenerateSeats">Regenerate</Button>
+          <div class="flex flex-col sm:flex-row justify-between sm:items-center gap-2">
+            <p class="text-xs sm:text-sm text-muted-foreground">{{ seats.length }} kursi tersedia</p>
+            <Button size="sm" variant="outline" @click="regenerateSeats" class="text-xs">Regenerate</Button>
           </div>
           
           <!-- Seat Map -->
-          <div class="border rounded-lg p-4 bg-gray-50">
-            <div class="text-center mb-4 text-sm font-medium">DEPAN BUS</div>
-            <div v-if="seatsByRow" class="space-y-2">
-              <div v-for="(rowSeats, row) in seatsByRow" :key="row" class="flex justify-center gap-2">
-                <div v-for="seat in rowSeats" :key="seat.id" class="w-12 h-10 border rounded flex items-center justify-center text-xs font-medium bg-white">
+          <div class="border rounded-lg p-3 sm:p-4 bg-gray-50">
+            <div class="text-center mb-3 sm:mb-4 text-xs sm:text-sm font-medium">DEPAN BUS</div>
+            <div v-if="seatsByRow" class="space-y-1 sm:space-y-2">
+              <div v-for="(rowSeats, row) in seatsByRow" :key="row" class="flex justify-center gap-1 sm:gap-2">
+                <div v-for="seat in rowSeats" :key="seat.id" class="w-8 h-8 sm:w-12 sm:h-10 border rounded flex items-center justify-center text-xs font-medium bg-white">
                   {{ seat.seat_number }}
                 </div>
               </div>
             </div>
-            <div class="text-center mt-4 text-sm font-medium">BELAKANG BUS</div>
+            <div class="text-center mt-3 sm:mt-4 text-xs sm:text-sm font-medium">BELAKANG BUS</div>
           </div>
         </div>
 
         <div class="flex justify-end">
-          <Button variant="outline" @click="showSeatsDialog = false">Tutup</Button>
+          <Button variant="outline" @click="showSeatsDialog = false" class="text-sm">Tutup</Button>
         </div>
       </DialogContent>
     </Dialog>
@@ -253,9 +256,8 @@ const fetchVehicles = async () => {
   try {
     const response = await api.get('/vehicles')
     vehicles.value = response.data.data || []
-  } catch (error) {
-    console.error('Failed to fetch vehicles:', error)
-    toast({ title: 'Error', description: 'Gagal memuat data kendaraan', variant: 'destructive' })
+  } catch {
+    toast({ title: 'Gagal memuat data kendaraan', variant: 'destructive' })
   } finally {
     loading.value = false
   }
@@ -265,8 +267,8 @@ const fetchPartners = async () => {
   try {
     const response = await api.get('/mitra')
     partners.value = response.data.data || []
-  } catch (error) {
-    console.error('Failed to fetch partners:', error)
+  } catch {
+    toast({ title: 'Gagal memuat data partner', variant: 'destructive' })
   }
 }
 
@@ -275,8 +277,12 @@ const fetchSeats = async (vehicleId: number) => {
   try {
     const response = await api.get(`/seats?vehicle_id=${vehicleId}`)
     seats.value = response.data.data || []
+    if (seats.value.length === 0) {
+      toast({ title: 'Info', description: 'Belum ada kursi yang di-generate untuk kendaraan ini' })
+    }
   } catch (error) {
     console.error('Failed to fetch seats:', error)
+    toast({ title: 'Error', description: 'Gagal memuat data kursi', variant: 'destructive' })
     seats.value = []
   } finally {
     loadingSeats.value = false
@@ -285,13 +291,7 @@ const fetchSeats = async (vehicleId: number) => {
 
 const openVehicleDialog = () => {
   isEdit.value = false
-  vehicleForm.value = {
-    name: '',
-    plate_number: '',
-    partner_id: '',
-    seat_capacity: 40,
-    seat_layout: '2-2'
-  }
+  vehicleForm.value = { name: '', plate_number: '', partner_id: '', seat_capacity: 40, seat_layout: '2-2' }
   showVehicleDialog.value = true
 }
 
@@ -309,11 +309,20 @@ const editVehicle = (vehicle: any) => {
 }
 
 const submitVehicle = async () => {
+  // Validasi form
+  if (!vehicleForm.value.name || !vehicleForm.value.plate_number || !vehicleForm.value.seat_capacity) {
+    toast({ title: 'Nama, plat nomor, dan kapasitas kursi harus diisi', variant: 'destructive' })
+    return
+  }
+  if (vehicleForm.value.seat_capacity < 1 || vehicleForm.value.seat_capacity > 100) {
+    toast({ title: 'Kapasitas kursi harus antara 1-100', variant: 'destructive' })
+    return
+  }
   submitting.value = true
   try {
     if (isEdit.value) {
       await api.put(`/vehicles/${selectedVehicle.value.id}`, vehicleForm.value)
-      toast({ title: 'Berhasil', description: 'Kendaraan berhasil diupdate' })
+      toast({ title: 'Berhasil', description: 'Kendaraan berhasil diperbarui' })
     } else {
       await api.post('/vehicles', vehicleForm.value)
       toast({ title: 'Berhasil', description: 'Kendaraan berhasil ditambahkan' })
@@ -321,13 +330,13 @@ const submitVehicle = async () => {
     showVehicleDialog.value = false
     fetchVehicles()
   } catch (error: any) {
-    toast({ title: 'Error', description: error.message || 'Gagal menyimpan kendaraan', variant: 'destructive' })
+    toast({ title: error.response?.data?.message || 'Gagal menyimpan kendaraan', variant: 'destructive' })
   } finally {
     submitting.value = false
   }
 }
 
-const deleteVehicle = async (id: number) => {
+const deleteVehicle = (id: number) => {
   showDeleteDialog.value = true
   vehicleToDelete.value = id
 }
@@ -339,7 +348,7 @@ const confirmDelete = async () => {
     toast({ title: 'Berhasil', description: 'Kendaraan berhasil dihapus' })
     fetchVehicles()
   } catch (error: any) {
-    toast({ title: 'Error', description: error.message || 'Gagal menghapus kendaraan', variant: 'destructive' })
+    toast({ title: error.response?.data?.message || 'Gagal menghapus kendaraan', variant: 'destructive' })
   } finally {
     showDeleteDialog.value = false
     vehicleToDelete.value = null
@@ -359,17 +368,15 @@ const generateSeats = async (vehicle: any) => {
       seat_capacity: vehicle.seat_capacity,
       seat_layout: vehicle.seat_layout
     })
-    toast({ title: 'Berhasil', description: 'Kursi berhasil di-generate' })
+    toast({ title: 'Berhasil', description: `${vehicle.seat_capacity} kursi berhasil di-generate` })
     fetchVehicles()
-    if (showSeatsDialog.value && selectedVehicle.value?.id === vehicle.id) {
-      fetchSeats(vehicle.id)
-    }
+    if (showSeatsDialog.value && selectedVehicle.value?.id === vehicle.id) fetchSeats(vehicle.id)
   } catch (error: any) {
-    toast({ title: 'Error', description: error.message || 'Gagal generate kursi', variant: 'destructive' })
+    toast({ title: error.response?.data?.message || 'Gagal generate kursi', variant: 'destructive' })
   }
 }
 
-const regenerateSeats = async () => {
+const regenerateSeats = () => {
   if (!selectedVehicle.value) return
   showRegenerateDialog.value = true
 }

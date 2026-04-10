@@ -10,29 +10,29 @@
       <SiteHeader />
       
       <div class="flex flex-1 flex-col">
-        <div class="flex flex-1 flex-col gap-4 p-4 md:gap-6 md:p-6">
+        <div class="flex flex-1 flex-col gap-3 p-3 sm:gap-4 sm:p-4 md:gap-6 md:p-6">
           <!-- Page Header -->
           <div>
-            <h1 class="text-3xl font-bold tracking-tight">Dashboard Mitra</h1>
-            <p class="text-muted-foreground mt-1">
+            <h1 class="text-2xl sm:text-3xl font-bold tracking-tight">Dashboard Mitra</h1>
+            <p class="text-muted-foreground mt-1 text-sm sm:text-base">
               Ringkasan aktivitas dan saldo mitra Anda.
             </p>
           </div>
 
           <!-- Error Alert -->
-          <div v-if="dashboardStore.error" class="rounded-lg border border-destructive/50 bg-destructive/10 p-4">
+          <div v-if="dashboardStore.error" class="rounded-lg border border-destructive/50 bg-destructive/10 p-3 sm:p-4">
             <p class="text-sm text-destructive font-medium">{{ dashboardStore.error }}</p>
             <p class="text-xs text-muted-foreground mt-1">Silakan hubungi admin untuk aktivasi akun mitra Anda.</p>
           </div>
 
           <!-- Stats Cards -->
-          <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          <div class="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
             <Card>
               <CardHeader class="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle class="text-sm font-medium">Saldo Deposit</CardTitle>
+                <CardTitle class="text-xs sm:text-sm font-medium">Saldo Deposit</CardTitle>
               </CardHeader>
               <CardContent>
-                <div class="text-2xl font-bold">
+                <div class="text-xl sm:text-2xl font-bold">
                   Rp {{ dashboardStore.dashboard.balance.toLocaleString('id-ID') }}
                 </div>
 
@@ -44,10 +44,10 @@
 
             <Card>
               <CardHeader class="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle class="text-sm font-medium">Total Transaksi</CardTitle>
+                <CardTitle class="text-xs sm:text-sm font-medium">Total Transaksi</CardTitle>
               </CardHeader>
               <CardContent>
-                <div class="text-2xl font-bold">
+                <div class="text-xl sm:text-2xl font-bold">
                   {{ dashboardStore.dashboard.totalTransactions }}
                 </div>
 
@@ -59,10 +59,10 @@
 
             <Card>
               <CardHeader class="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle class="text-sm font-medium">Total Fee Diperoleh</CardTitle>
+                <CardTitle class="text-xs sm:text-sm font-medium">Total Fee Diperoleh</CardTitle>
               </CardHeader>
               <CardContent>
-                <div class="text-2xl font-bold">
+                <div class="text-xl sm:text-2xl font-bold">
                       Rp {{ dashboardStore.dashboard.totalFee.toLocaleString('id-ID') }}
                 </div>
 

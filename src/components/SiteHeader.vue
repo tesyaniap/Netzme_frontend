@@ -51,11 +51,11 @@ const currentPageName = computed(() => {
 </script>
 
 <template>
-  <header class="sticky top-0 flex h-12 shrink-0 items-center gap-2 border-b bg-background px-4">
-    <div class="flex items-center gap-2 flex-1">
+  <header class="sticky top-0 flex h-12 shrink-0 items-center gap-2 border-b bg-background px-2 sm:px-4">
+    <div class="flex items-center gap-1 sm:gap-2 flex-1">
       <SidebarTrigger class="-ml-1" />
-      <Separator orientation="vertical" class="mr-2 h-4" />
-      <Breadcrumb>
+      <Separator orientation="vertical" class="mr-1 sm:mr-2 h-4" />
+      <Breadcrumb class="hidden sm:block">
         <BreadcrumbList>
           <BreadcrumbItem>
             <BreadcrumbLink href="/mitra/dashboard">
@@ -68,11 +68,15 @@ const currentPageName = computed(() => {
           </BreadcrumbItem>
         </BreadcrumbList>
       </Breadcrumb>
+      <!-- Mobile page title -->
+      <div class="sm:hidden text-sm font-medium truncate">
+        {{ currentPageName }}
+      </div>
     </div>
     
-    <div class="flex items-center gap-2">
+    <div class="flex items-center gap-1 sm:gap-2">
       <button
-        class="flex h-8 w-8 items-center justify-center rounded-md hover:bg-accent hover:text-accent-foreground"
+        class="hidden sm:flex h-8 w-8 items-center justify-center rounded-md hover:bg-accent hover:text-accent-foreground"
         aria-label="Search"
       >
         <Search class="h-4 w-4" />
@@ -80,8 +84,8 @@ const currentPageName = computed(() => {
       
       <DropdownMenu>
         <DropdownMenuTrigger as-child>
-          <button class="flex items-center gap-2 rounded-md hover:bg-accent px-2 py-1">
-            <Avatar class="h-8 w-8">
+          <button class="flex items-center gap-1 sm:gap-2 rounded-md hover:bg-accent px-1 sm:px-2 py-1">
+            <Avatar class="h-7 w-7 sm:h-8 sm:w-8">
               <AvatarFallback class="text-xs">
                 {{ getUserInitials() }}
               </AvatarFallback>

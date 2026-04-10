@@ -1,14 +1,14 @@
 <template>
-  <div class="min-h-screen flex items-center justify-center bg-background p-4">
-    <div class="w-full max-w-md space-y-8">
+  <div class="min-h-screen flex items-center justify-center bg-background p-4 sm:p-6">
+    <div class="w-full max-w-md space-y-6 sm:space-y-8">
       <div class="text-center space-y-2">
-        <h1 class="text-3xl font-bold">H2H Ticketing</h1>
-        <p class="text-muted-foreground">Masuk ke dashboard admin</p>
+        <h1 class="text-2xl sm:text-3xl font-bold">H2H Ticketing</h1>
+        <p class="text-muted-foreground text-sm sm:text-base">Masuk ke dashboard admin</p>
       </div>
 
       <Card>
-        <CardContent class="pt-6">
-          <form @submit.prevent="handleLogin" class="space-y-4">
+        <CardContent class="pt-4 sm:pt-6">
+          <form @submit.prevent="handleLogin" class="space-y-3 sm:space-y-4">
             <div class="space-y-2">
               <Label for="email">Email</Label>
               <Input

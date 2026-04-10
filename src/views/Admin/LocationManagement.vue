@@ -13,22 +13,22 @@
         </div>
 
         <!-- Tabs -->
-        <div class="flex space-x-1 bg-muted p-1 rounded-lg w-fit">
+        <div class="flex space-x-1 bg-muted p-1 rounded-lg w-full sm:w-fit overflow-x-auto">
           <button 
-            @click="activeTab = 'cities'"
-            :class="['px-4 py-2 rounded-md text-sm font-medium transition-all', activeTab === 'cities' ? 'bg-background shadow-sm' : 'hover:bg-background/50']"
+            @click="() => { activeTab = 'cities'; toast({ title: 'Tab Kota', description: 'Menampilkan daftar kota' }) }"
+            :class="['px-3 sm:px-4 py-2 rounded-md text-xs sm:text-sm font-medium transition-all whitespace-nowrap flex-shrink-0', activeTab === 'cities' ? 'bg-background shadow-sm' : 'hover:bg-background/50']"
           >
             Kota
           </button>
           <button 
-            @click="activeTab = 'terminals'"
-            :class="['px-4 py-2 rounded-md text-sm font-medium transition-all', activeTab === 'terminals' ? 'bg-background shadow-sm' : 'hover:bg-background/50']"
+            @click="() => { activeTab = 'terminals'; toast({ title: 'Tab Terminal', description: 'Menampilkan daftar terminal' }) }"
+            :class="['px-3 sm:px-4 py-2 rounded-md text-xs sm:text-sm font-medium transition-all whitespace-nowrap flex-shrink-0', activeTab === 'terminals' ? 'bg-background shadow-sm' : 'hover:bg-background/50']"
           >
             Terminal
           </button>
           <button 
-            @click="activeTab = 'routes'"
-            :class="['px-4 py-2 rounded-md text-sm font-medium transition-all', activeTab === 'routes' ? 'bg-background shadow-sm' : 'hover:bg-background/50']"
+            @click="() => { activeTab = 'routes'; toast({ title: 'Tab Rute', description: 'Menampilkan daftar rute' }) }"
+            :class="['px-3 sm:px-4 py-2 rounded-md text-xs sm:text-sm font-medium transition-all whitespace-nowrap flex-shrink-0', activeTab === 'routes' ? 'bg-background shadow-sm' : 'hover:bg-background/50']"
           >
             Rute
           </button>
@@ -205,7 +205,7 @@
         </div>
 
         <div class="flex justify-end gap-2">
-          <Button variant="outline" @click="showCityDialog = false">Batal</Button>
+          <Button variant="outline" @click="() => { showCityDialog = false; toast({ title: 'Dibatalkan', description: 'Form kota dibatalkan' }) }">Batal</Button>
           <Button @click="submitCity" :disabled="submittingCity">
             {{ submittingCity ? 'Menyimpan...' : 'Simpan' }}
           </Button>
@@ -275,7 +275,7 @@
         </div>
 
         <div class="flex justify-end gap-2">
-          <Button variant="outline" @click="showRouteDialog = false">Batal</Button>
+          <Button variant="outline" @click="() => { showRouteDialog = false; toast({ title: 'Dibatalkan', description: 'Form rute dibatalkan' }) }">Batal</Button>
           <Button @click="submitRoute" :disabled="submittingRoute">
             {{ submittingRoute ? 'Menyimpan...' : 'Simpan' }}
           </Button>
@@ -317,7 +317,7 @@
         </div>
 
         <div class="flex justify-end gap-2">
-          <Button variant="outline" @click="showTerminalDialog = false">Batal</Button>
+          <Button variant="outline" @click="() => { showTerminalDialog = false; toast({ title: 'Dibatalkan', description: 'Form terminal dibatalkan' }) }">Batal</Button>
           <Button @click="submitTerminal" :disabled="submittingTerminal">
             {{ submittingTerminal ? 'Menyimpan...' : 'Simpan' }}
           </Button>
@@ -332,7 +332,7 @@
         <DialogDescription>Yakin ingin menghapus kota ini? Tindakan ini tidak dapat dibatalkan.</DialogDescription>
         
         <div class="flex justify-end gap-2 mt-4">
-          <Button variant="outline" @click="showDeleteCityDialog = false">Batal</Button>
+          <Button variant="outline" @click="() => { showDeleteCityDialog = false; toast({ title: 'Dibatalkan', description: 'Penghapusan kota dibatalkan' }) }">Batal</Button>
           <Button variant="destructive" @click="confirmDeleteCity">Hapus</Button>
         </div>
       </DialogContent>
@@ -345,7 +345,7 @@
         <DialogDescription>Yakin ingin menghapus rute ini? Tindakan ini tidak dapat dibatalkan.</DialogDescription>
         
         <div class="flex justify-end gap-2 mt-4">
-          <Button variant="outline" @click="showDeleteRouteDialog = false">Batal</Button>
+          <Button variant="outline" @click="() => { showDeleteRouteDialog = false; toast({ title: 'Dibatalkan', description: 'Penghapusan rute dibatalkan' }) }">Batal</Button>
           <Button variant="destructive" @click="confirmDeleteRoute">Hapus</Button>
         </div>
       </DialogContent>
@@ -356,7 +356,7 @@
         <DialogDescription>Yakin ingin menghapus terminal ini? Tindakan ini tidak dapat dibatalkan.</DialogDescription>
         
         <div class="flex justify-end gap-2 mt-4">
-          <Button variant="outline" @click="showDeleteTerminalDialog = false">Batal</Button>
+          <Button variant="outline" @click="() => { showDeleteTerminalDialog = false; toast({ title: 'Dibatalkan', description: 'Penghapusan terminal dibatalkan' }) }">Batal</Button>
           <Button variant="destructive" @click="confirmDeleteTerminal">Hapus</Button>
         </div>
       </DialogContent>
@@ -445,6 +445,7 @@ const destinationTerminals = computed(() => {
 })
 
 onMounted(() => {
+  toast({ title: 'Selamat Datang', description: 'Halaman manajemen lokasi berhasil dimuat' })
   fetchCities()
   fetchTerminals()
   fetchRoutes()
@@ -455,6 +456,9 @@ const fetchCities = async () => {
   try {
     const response = await api.get('/cities')
     cities.value = response.data.data || []
+    if (cities.value.length === 0) {
+      toast({ title: 'Info', description: 'Belum ada data kota' })
+    }
   } catch (error) {
     console.error('Failed to fetch cities:', error)
     toast({ title: 'Error', description: 'Gagal memuat data kota', variant: 'destructive' })
@@ -468,6 +472,9 @@ const fetchTerminals = async () => {
   try {
     const response = await api.get('/terminals')
     terminals.value = response.data.data || []
+    if (terminals.value.length === 0) {
+      toast({ title: 'Info', description: 'Belum ada data terminal' })
+    }
   } catch (error) {
     console.error('Failed to fetch terminals:', error)
     toast({ title: 'Error', description: 'Gagal memuat data terminal', variant: 'destructive' })
@@ -481,6 +488,9 @@ const fetchRoutes = async () => {
   try {
     const response = await api.get('/routes')
     routes.value = response.data.data || []
+    if (routes.value.length === 0) {
+      toast({ title: 'Info', description: 'Belum ada data rute' })
+    }
   } catch (error) {
     console.error('Failed to fetch routes:', error)
     toast({ title: 'Error', description: 'Gagal memuat data rute', variant: 'destructive' })
@@ -500,6 +510,7 @@ const openRouteDialog = () => {
     duration: ''
   }
   showRouteDialog.value = true
+  toast({ title: 'Form Rute', description: 'Silakan isi data rute baru' })
 }
 
 const editRoute = (route: any) => {
@@ -514,21 +525,43 @@ const editRoute = (route: any) => {
   }
   selectedRoute.value = route
   showRouteDialog.value = true
+  toast({ title: 'Edit Rute', description: `Mengedit rute ${route.origin_city?.name} - ${route.destination_city?.name}` })
 }
 
 const submitRoute = async () => {
+  // Validasi form
+  if (!routeForm.value.origin_city_id || !routeForm.value.destination_city_id || 
+      !routeForm.value.origin_terminal_id || !routeForm.value.destination_terminal_id) {
+    toast({ title: 'Validasi Error', description: 'Semua field kota dan terminal harus dipilih', variant: 'destructive' })
+    return
+  }
+  
+  if (routeForm.value.origin_city_id === routeForm.value.destination_city_id) {
+    toast({ title: 'Validasi Error', description: 'Kota asal dan tujuan tidak boleh sama', variant: 'destructive' })
+    return
+  }
+  
   submittingRoute.value = true
+  const savingToast = toast({ 
+    title: 'Menyimpan...', 
+    description: isEditRoute.value ? 'Mengupdate data rute' : 'Menambahkan rute baru', 
+    duration: 0 
+  })
+  
   try {
     if (isEditRoute.value) {
       await api.put(`/routes/${selectedRoute.value.id}`, routeForm.value)
+      savingToast.dismiss()
       toast({ title: 'Berhasil', description: 'Rute berhasil diupdate' })
     } else {
       await api.post('/routes', routeForm.value)
+      savingToast.dismiss()
       toast({ title: 'Berhasil', description: 'Rute berhasil ditambahkan' })
     }
     showRouteDialog.value = false
     fetchRoutes()
   } catch (error: any) {
+    savingToast.dismiss()
     toast({ title: 'Error', description: error.response?.data?.message || 'Gagal menyimpan rute', variant: 'destructive' })
   } finally {
     submittingRoute.value = false
@@ -542,11 +575,20 @@ const deleteRoute = (id: number) => {
 
 const confirmDeleteRoute = async () => {
   if (!routeToDelete.value) return
+  
+  const deletingToast = toast({ 
+    title: 'Menghapus...', 
+    description: 'Sedang menghapus rute', 
+    duration: 0 
+  })
+  
   try {
     await api.delete(`/routes/${routeToDelete.value}`)
+    deletingToast.dismiss()
     toast({ title: 'Berhasil', description: 'Rute berhasil dihapus' })
     fetchRoutes()
   } catch (error: any) {
+    deletingToast.dismiss()
     toast({ title: 'Error', description: error.response?.data?.message || 'Gagal menghapus rute', variant: 'destructive' })
   } finally {
     showDeleteRouteDialog.value = false
@@ -570,6 +612,7 @@ const openCityDialog = () => {
     province: ''
   }
   showCityDialog.value = true
+  toast({ title: 'Form Kota', description: 'Silakan isi data kota baru' })
 }
 
 const editCity = (city: any) => {
@@ -581,21 +624,37 @@ const editCity = (city: any) => {
   }
   selectedCity.value = city
   showCityDialog.value = true
+  toast({ title: 'Edit Kota', description: `Mengedit data kota ${city.name}` })
 }
 
 const submitCity = async () => {
+  // Validasi form
+  if (!cityForm.value.name || !cityForm.value.code || !cityForm.value.province) {
+    toast({ title: 'Validasi Error', description: 'Semua field harus diisi', variant: 'destructive' })
+    return
+  }
+  
   submittingCity.value = true
+  const savingToast = toast({ 
+    title: 'Menyimpan...', 
+    description: isEditCity.value ? 'Mengupdate data kota' : 'Menambahkan kota baru', 
+    duration: 0 
+  })
+  
   try {
     if (isEditCity.value) {
       await api.put(`/cities/${selectedCity.value.id}`, cityForm.value)
+      savingToast.dismiss()
       toast({ title: 'Berhasil', description: 'Kota berhasil diupdate' })
     } else {
       await api.post('/cities', cityForm.value)
+      savingToast.dismiss()
       toast({ title: 'Berhasil', description: 'Kota berhasil ditambahkan' })
     }
     showCityDialog.value = false
     fetchCities()
   } catch (error: any) {
+    savingToast.dismiss()
     toast({ title: 'Error', description: error.response?.data?.message || 'Gagal menyimpan kota', variant: 'destructive' })
   } finally {
     submittingCity.value = false
@@ -609,11 +668,20 @@ const deleteCity = (id: number) => {
 
 const confirmDeleteCity = async () => {
   if (!cityToDelete.value) return
+  
+  const deletingToast = toast({ 
+    title: 'Menghapus...', 
+    description: 'Sedang menghapus kota', 
+    duration: 0 
+  })
+  
   try {
     await api.delete(`/cities/${cityToDelete.value}`)
+    deletingToast.dismiss()
     toast({ title: 'Berhasil', description: 'Kota berhasil dihapus' })
     fetchCities()
   } catch (error: any) {
+    deletingToast.dismiss()
     toast({ title: 'Error', description: error.response?.data?.message || 'Gagal menghapus kota', variant: 'destructive' })
   } finally {
     showDeleteCityDialog.value = false
@@ -630,6 +698,7 @@ const openTerminalDialog = () => {
     type: ''
   }
   showTerminalDialog.value = true
+  toast({ title: 'Form Terminal', description: 'Silakan isi data terminal baru' })
 }
 
 const editTerminal = (terminal: any) => {
@@ -642,21 +711,37 @@ const editTerminal = (terminal: any) => {
   }
   selectedTerminal.value = terminal
   showTerminalDialog.value = true
+  toast({ title: 'Edit Terminal', description: `Mengedit data terminal ${terminal.name}` })
 }
 
 const submitTerminal = async () => {
+  // Validasi form
+  if (!terminalForm.value.name || !terminalForm.value.city_id || !terminalForm.value.address) {
+    toast({ title: 'Validasi Error', description: 'Nama, kota, dan alamat harus diisi', variant: 'destructive' })
+    return
+  }
+  
   submittingTerminal.value = true
+  const savingToast = toast({ 
+    title: 'Menyimpan...', 
+    description: isEditTerminal.value ? 'Mengupdate data terminal' : 'Menambahkan terminal baru', 
+    duration: 0 
+  })
+  
   try {
     if (isEditTerminal.value) {
       await api.put(`/terminals/${selectedTerminal.value.id}`, terminalForm.value)
+      savingToast.dismiss()
       toast({ title: 'Berhasil', description: 'Terminal berhasil diupdate' })
     } else {
       await api.post('/terminals', terminalForm.value)
+      savingToast.dismiss()
       toast({ title: 'Berhasil', description: 'Terminal berhasil ditambahkan' })
     }
     showTerminalDialog.value = false
     fetchTerminals()
   } catch (error: any) {
+    savingToast.dismiss()
     toast({ title: 'Error', description: error.response?.data?.message || 'Gagal menyimpan terminal', variant: 'destructive' })
   } finally {
     submittingTerminal.value = false
@@ -670,11 +755,20 @@ const deleteTerminal = (id: number) => {
 
 const confirmDeleteTerminal = async () => {
   if (!terminalToDelete.value) return
+  
+  const deletingToast = toast({ 
+    title: 'Menghapus...', 
+    description: 'Sedang menghapus terminal', 
+    duration: 0 
+  })
+  
   try {
     await api.delete(`/terminals/${terminalToDelete.value}`)
+    deletingToast.dismiss()
     toast({ title: 'Berhasil', description: 'Terminal berhasil dihapus' })
     fetchTerminals()
   } catch (error: any) {
+    deletingToast.dismiss()
     toast({ title: 'Error', description: error.response?.data?.message || 'Gagal menghapus terminal', variant: 'destructive' })
   } finally {
     showDeleteTerminalDialog.value = false

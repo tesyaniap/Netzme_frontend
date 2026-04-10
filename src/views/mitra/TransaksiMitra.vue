@@ -56,12 +56,18 @@ const openSearchDialog = () => {
 const search = async () => {
   if (!origin.value || !destination.value || !travel_date.value) {
     toast({
-      title: 'Error',
+      title: 'Validasi Error',
       description: 'Semua field pencarian wajib diisi',
       variant: 'destructive'
     })
     return
   }
+
+  const searchingToast = toast({ 
+    title: 'Mencari Jadwal...', 
+    description: 'Sedang mencari jadwal yang tersedia', 
+    duration: 0 
+  })
 
   try {
     console.log('🔍 Starting search with params:', {
@@ -83,6 +89,8 @@ const search = async () => {
       console.log('🔍 First schedule data:', JSON.stringify(store.schedules[0], null, 2))
     }
     
+    searchingToast.dismiss()
+    
     if (store.schedules.length === 0) {
       toast({
         title: 'Tidak Ada Jadwal',
@@ -92,6 +100,8 @@ const search = async () => {
       return
     }
     
+    toast({ title: 'Berhasil', description: `Ditemukan ${store.schedules.length} jadwal tersedia` })
+    
     console.log('🚀 Opening schedule dialog...')
     showSearchDialog.value = false
     
@@ -100,6 +110,7 @@ const search = async () => {
     showScheduleDialog.value = true
     console.log('✅ Schedule dialog opened:', showScheduleDialog.value)
   } catch (error: any) {
+    searchingToast.dismiss()
     console.error('❌ Search error:', error)
     toast({
       title: 'Pencarian Gagal',
@@ -111,19 +122,30 @@ const search = async () => {
 
 const selectSchedule = async (schedule: any) => {
   console.log('🎯 Schedule selected:', schedule)
+  toast({ title: 'Jadwal Dipilih', description: `Memuat peta kursi untuk ${schedule.vehicle?.name || 'Bus'}` })
+  
   selectedSchedule.value = schedule
   travel_date.value = schedule.travel_date
   selectedSeats.value = []
   selectedSeatNumbers.value = []
   
+  const loadingToast = toast({ 
+    title: 'Memuat Peta Kursi...', 
+    description: 'Sedang mengambil data kursi yang tersedia', 
+    duration: 0 
+  })
+  
   try {
     showScheduleDialog.value = false
     await store.getSeatMap(schedule.id, travel_date.value)
+    loadingToast.dismiss()
+    toast({ title: 'Peta Kursi Siap', description: `${store.seatMapData?.seat_summary?.available_seats || 0} kursi tersedia` })
     showSeatMapDialog.value = true
   } catch (error: any) {
+    loadingToast.dismiss()
     console.error('❌ Seat map error:', error)
     toast({
-      title: 'Error',
+      title: 'Error Peta Kursi',
       description: error.message || 'Gagal memuat peta kursi',
       variant: 'destructive'
     })
@@ -338,16 +360,24 @@ const showPrintDialog = ref(false)
 const selectedTicket = ref<any>(null)
 
 const loadStatistics = async () => {
-  await store.fetchStatistics('today')
-  if (selectedPeriod.value === 'year') {
-    await store.fetchStatistics('year', undefined, selectedYear.value)
-  } else if (selectedPeriod.value === 'month') {
-    await store.fetchStatistics('month', selectedMonth.value, selectedYear.value)
+  try {
+    await store.fetchStatistics('today')
+    if (selectedPeriod.value === 'year') {
+      await store.fetchStatistics('year', undefined, selectedYear.value)
+    } else if (selectedPeriod.value === 'month') {
+      await store.fetchStatistics('month', selectedMonth.value, selectedYear.value)
+    }
+  } catch (error) {
+    toast({ title: 'Warning', description: 'Gagal memuat statistik', variant: 'destructive' })
   }
 }
 
 const loadHistory = async () => {
-  await store.fetchHistory(1, 5)
+  try {
+    await store.fetchHistory(1, 5)
+  } catch (error) {
+    toast({ title: 'Warning', description: 'Gagal memuat riwayat transaksi', variant: 'destructive' })
+  }
 }
 
 const getStatusBadge = (status: string) => {
@@ -380,6 +410,7 @@ watch([selectedPeriod, selectedMonth, selectedYear], () => {
 
 // Load initial data
 onMounted(() => {
+  toast({ title: 'Selamat Datang', description: 'Halaman transaksi mitra berhasil dimuat' })
   loadStatistics()
   loadHistory()
 })
