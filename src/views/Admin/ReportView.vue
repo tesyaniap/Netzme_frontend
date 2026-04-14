@@ -10,12 +10,10 @@
       <SiteHeader />
       
       <div class="flex flex-1 flex-col">
-        <div class="flex flex-1 flex-col gap-4 p-4 md:gap-6 md:p-6">
+        <div class="flex flex-1 flex-col gap-3 p-3 sm:gap-4 sm:p-4 md:gap-6 md:p-6">
           <div>
-            <h1 class="text-3xl font-bold tracking-tight">Laporan Transaksi</h1>
-            <p class="text-muted-foreground mt-1">
-              Generate dan export laporan transaksi
-            </p>
+            <h1 class="text-2xl sm:text-3xl font-bold tracking-tight">Laporan Transaksi</h1>
+            <p class="text-muted-foreground mt-1 text-sm sm:text-base">Generate dan export laporan transaksi</p>
           </div>
 
           <!-- Filters -->
@@ -24,7 +22,7 @@
               <CardTitle>Filter Laporan</CardTitle>
             </CardHeader>
             <CardContent>
-              <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                 <div class="space-y-2">
                   <Label>Tanggal Mulai</Label>
                   <Input type="date" v-model="filters.start_date" />
@@ -66,17 +64,17 @@
           <!-- Report Table -->
           <Card>
             <CardHeader>
-              <div class="flex items-center justify-between">
+              <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                 <div>
                   <CardTitle>Data Laporan</CardTitle>
                   <CardDescription>{{ reportStore.filteredTransactions.length }} transaksi ditemukan</CardDescription>
                 </div>
-                <div class="flex gap-2">
-                  <Button variant="outline" size="sm" @click="reportStore.exportPDF">
+                <div class="flex gap-2 w-full sm:w-auto">
+                  <Button variant="outline" size="sm" class="flex-1 sm:flex-none" @click="reportStore.exportPDF">
                     <FileText class="mr-2 h-4 w-4" />
                     Export PDF
                   </Button>
-                  <Button variant="outline" size="sm" @click="reportStore.exportExcel">
+                  <Button variant="outline" size="sm" class="flex-1 sm:flex-none" @click="reportStore.exportExcel">
                     <FileSpreadsheet class="mr-2 h-4 w-4" />
                     Export Excel
                   </Button>
@@ -84,6 +82,7 @@
               </div>
             </CardHeader>
             <CardContent>
+              <div class="overflow-x-auto">
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -116,7 +115,7 @@
                   </TableRow>
                 </TableBody>
               </Table>
-            </CardContent>
+              </div>
           </Card>
         </div>
       </div>

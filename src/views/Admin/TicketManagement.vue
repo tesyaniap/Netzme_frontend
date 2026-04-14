@@ -4,10 +4,10 @@
     <SidebarInset>
       <SiteHeader />
 
-      <div class="flex flex-1 flex-col gap-4 p-4 md:gap-6 md:p-6">
+      <div class="flex flex-1 flex-col gap-3 p-3 sm:gap-4 sm:p-4 md:gap-6 md:p-6">
         <div>
-          <h1 class="text-3xl font-bold tracking-tight">Manajemen Tiket</h1>
-          <p class="text-muted-foreground mt-1">Daftar e-tiket dengan status paid dan issued</p>
+          <h1 class="text-2xl sm:text-3xl font-bold tracking-tight">Manajemen Tiket</h1>
+          <p class="text-muted-foreground mt-1 text-sm sm:text-base">Daftar e-tiket dengan status paid dan issued</p>
         </div>
 
         <Card>
@@ -17,10 +17,12 @@
           </CardHeader>
           <CardContent>
             <!-- Search & Filter -->
-            <div class="flex flex-col md:flex-row gap-4 mb-6">
-              <Input v-model="searchQuery" placeholder="Cari kode transaksi atau nama customer..." class="flex-1" @keyup.enter="fetchTickets" />
-              <Input v-model="dateFilter" type="date" class="w-[160px]" @change="fetchTickets" />
-              <Button @click="fetchTickets" variant="outline">Cari</Button>
+            <div class="flex flex-col gap-3 mb-6">
+              <Input v-model="searchQuery" placeholder="Cari kode transaksi atau nama customer..." class="w-full" @keyup.enter="fetchTickets" />
+              <div class="flex flex-col sm:flex-row gap-2">
+                <Input v-model="dateFilter" type="date" class="w-full sm:w-[160px]" @change="fetchTickets" />
+                <Button @click="fetchTickets" variant="outline" class="w-full sm:w-auto">Cari</Button>
+              </div>
             </div>
 
             <div v-if="loading" class="text-center py-8">Loading...</div>
@@ -28,6 +30,7 @@
               Tidak ada tiket ditemukan
             </div>
             <div v-else>
+              <div class="overflow-x-auto">
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -69,19 +72,23 @@
                     </TableCell>
                     <TableCell>
                       <Badge
-                        :class="ticket.status === 'issued'
-                          ? 'bg-green-100 text-green-800 border-green-300'
-                          : 'bg-blue-100 text-blue-800 border-blue-300'"
-                      >{{ ticket.status === 'issued' ? 'Issued' : 'Paid' }}</Badge>
+                        :class="{
+                          'bg-green-100 text-green-800 border-green-300': ticket.status === 'issued',
+                          'bg-blue-100 text-blue-800 border-blue-300': ticket.status === 'paid',
+                          'bg-purple-100 text-purple-800 border-purple-300': ticket.status === 'rescheduled',
+                        }"
+                      >
+                        {{ ticket.status === 'issued' ? 'Issued' : ticket.status === 'rescheduled' ? 'Rescheduled' : 'Paid' }}
+                      </Badge>
                     </TableCell>
                     <TableCell class="text-right">
-                      <div class="flex justify-end gap-2">
+                      <div class="flex flex-col sm:flex-row justify-end gap-1 sm:gap-2">
                         <Button size="sm" variant="outline" @click="viewDetail(ticket)">Detail</Button>
                         <Button v-if="ticket.status === 'paid'" size="sm" variant="outline" @click="openReschedule(ticket)">
                           <CalendarClock class="h-4 w-4 mr-1" />
                           Reschedule
                         </Button>
-                        <Button v-if="ticket.status === 'issued'" size="sm" @click="printTicket(ticket)">
+                        <Button v-if="ticket.status === 'issued' || ticket.status === 'rescheduled'" size="sm" @click="printTicket(ticket)">
                           <Printer class="h-4 w-4 mr-1" />
                           Cetak
                         </Button>
@@ -90,9 +97,10 @@
                   </TableRow>
                 </TableBody>
               </Table>
+              </div>
 
               <!-- Pagination -->
-              <div class="flex items-center justify-between pt-4 border-t mt-4">
+              <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between pt-4 border-t mt-4 gap-3">
                 <p class="text-sm text-muted-foreground">
                   Halaman {{ currentPage }} dari {{ lastPage }} ({{ total }} tiket)
                 </p>
@@ -217,16 +225,18 @@
               :class="selectedSchedule?.id === s.id ? 'border-primary bg-primary/5' : 'hover:bg-muted/50'"
               @click="selectedSchedule = s"
             >
-              <div class="flex justify-between items-start">
+              <div class="flex justify-between items-center">
                 <div>
-                  <p class="font-medium text-sm">{{ s.route?.origin_city }} → {{ s.route?.destination_city }}</p>
-                  <p class="text-xs text-muted-foreground">{{ s.travel_date }} · {{ s.departure_time }} - {{ s.arrival_time }}</p>
-                  <p class="text-xs text-muted-foreground">{{ s.vehicle?.name }} ({{ s.vehicle?.plate_number }})</p>
+                  <p class="font-medium text-sm">
+                    {{ s.route?.origin_city ?? s.route?.originCity?.name ?? '-' }}
+                    →
+                    {{ s.route?.destination_city ?? s.route?.destinationCity?.name ?? '-' }}
+                  </p>
+                  <p class="text-xs text-muted-foreground">
+                    {{ s.travel_date ?? 'Harian' }} · {{ s.departure_time?.substring(0,5) }} - {{ s.arrival_time?.substring(0,5) }}
+                  </p>
                 </div>
-                <div class="text-right">
-                  <p class="font-semibold text-sm">{{ formatCurrency(Number(s.price)) }}</p>
-                  <p class="text-xs text-muted-foreground">{{ s.available_seats }} kursi tersedia</p>
-                </div>
+                <p class="font-semibold text-sm text-primary">{{ formatCurrency(Number(s.price)) }}</p>
               </div>
             </div>
           </div>
@@ -340,86 +350,15 @@
     <!-- Print Preview Dialog -->
     <Dialog v-model:open="showPrintDialog">
       <DialogContent class="max-w-2xl">
-        <DialogTitle>Cetak Ulang E-Tiket</DialogTitle>
+        <DialogTitle>Cetak E-Tiket</DialogTitle>
         <DialogDescription>Preview tiket sebelum dicetak</DialogDescription>
 
         <div v-if="loadingPrint" class="text-center py-8">Memuat data tiket...</div>
-        <div v-else-if="printData" id="print-area" class="space-y-0">
-          <!-- Ticket Card -->
-          <div class="border-2 border-gray-800 rounded-lg overflow-hidden">
-            <!-- Header -->
-            <div class="bg-gray-800 text-white p-4 flex justify-between items-center">
-              <div>
-                <h2 class="text-lg font-bold">E-TIKET BUS</h2>
-                <p class="text-sm opacity-80">{{ printData.operator?.name }}</p>
-              </div>
-              <div class="text-right">
-                <p class="text-xs opacity-70">Kode Booking</p>
-                <p class="text-xl font-bold tracking-widest">{{ printData.booking_code }}</p>
-              </div>
-            </div>
+        <TicketPrint v-else-if="ticketPrintData" :ticket="ticketPrintData" />
+        <div v-else class="text-center py-8 text-muted-foreground">Data tiket tidak tersedia</div>
 
-            <!-- Route -->
-            <div class="p-4 bg-blue-50 flex items-center justify-between">
-              <div class="text-center">
-                <p class="text-2xl font-bold text-blue-800">{{ printData.route?.origin?.city }}</p>
-                <p class="text-sm text-blue-600">{{ printData.route?.origin?.terminal }}</p>
-              </div>
-              <div class="text-center text-gray-400">
-                <p class="text-2xl">→</p>
-                <p class="text-xs">{{ printData.schedule?.formatted_travel_date }}</p>
-              </div>
-              <div class="text-center">
-                <p class="text-2xl font-bold text-blue-800">{{ printData.route?.destination?.city }}</p>
-                <p class="text-sm text-blue-600">{{ printData.route?.destination?.terminal }}</p>
-              </div>
-            </div>
-
-            <!-- Details -->
-            <div class="p-4 grid grid-cols-3 gap-4 border-t">
-              <div>
-                <p class="text-xs text-gray-500">Penumpang</p>
-                <p class="font-semibold">{{ printData.passenger?.name }}</p>
-                <p class="text-sm text-gray-600">{{ printData.passenger?.phone }}</p>
-              </div>
-              <div>
-                <p class="text-xs text-gray-500">Keberangkatan</p>
-                <p class="font-semibold text-lg">{{ printData.schedule?.formatted_departure_time }}</p>
-                <p class="text-sm text-gray-600">{{ printData.schedule?.formatted_travel_date }}</p>
-              </div>
-              <div>
-                <p class="text-xs text-gray-500">Kursi</p>
-                <p class="font-semibold text-2xl text-blue-700">{{ printData.seat?.number }}</p>
-                <p class="text-sm text-gray-600">{{ printData.seat?.position }}</p>
-              </div>
-            </div>
-
-            <!-- Vehicle & Price -->
-            <div class="p-4 grid grid-cols-2 gap-4 border-t bg-gray-50">
-              <div>
-                <p class="text-xs text-gray-500">Kendaraan</p>
-                <p class="font-medium">{{ printData.vehicle?.name }}</p>
-                <p class="text-sm text-gray-600">{{ printData.vehicle?.plate_number }}</p>
-              </div>
-              <div class="text-right">
-                <p class="text-xs text-gray-500">Harga Tiket</p>
-                <p class="font-bold text-lg">{{ printData.pricing?.formatted_ticket_price }}</p>
-              </div>
-            </div>
-
-            <!-- Footer -->
-            <div class="p-3 bg-gray-100 border-t text-center">
-              <p class="text-xs text-gray-500">Dicetak ulang pada {{ new Date().toLocaleString('id-ID') }} • Tiket ini sah dan berlaku untuk 1 penumpang</p>
-            </div>
-          </div>
-        </div>
-
-        <div class="flex justify-end gap-2 pt-2">
+        <div class="flex justify-end pt-2">
           <Button variant="outline" @click="showPrintDialog = false">Tutup</Button>
-          <Button @click="doPrint">
-            <Printer class="h-4 w-4 mr-2" />
-            Print
-          </Button>
         </div>
       </DialogContent>
     </Dialog>
@@ -438,6 +377,7 @@ import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/compone
 import { Printer, CalendarClock } from 'lucide-vue-next'
 import AppSidebar from '@/components/AppSidebar.vue'
 import SiteHeader from '@/components/SiteHeader.vue'
+import TicketPrint from '@/components/TicketPrint.vue'
 import { api } from '@/services/api.service'
 import { useToast } from '@/components/ui/toast'
 
@@ -457,7 +397,8 @@ const total = ref(0)
 const showDetailDialog = ref(false)
 const showPrintDialog = ref(false)
 const selectedTicket = ref<any>(null)
-const printData = ref<any>(null)
+const printData = ref<any>(null)   // raw data dari /tickets/{id}/data
+const ticketPrintData = ref<any>(null) // data format TicketPrint.vue
 const currentPrintTicketId = ref<number | null>(null)
 const selectedDetailPassengers = ref<any[]>([])
 
@@ -469,14 +410,12 @@ const fetchTickets = async () => {
   loading.value = true
   try {
     const params: Record<string, any> = {
-      status: 'success', // 'success' = paid + issued di ReportController
       page: currentPage.value,
       per_page: 10,
     }
     if (dateFilter.value) params.travel_date = dateFilter.value
     if (searchQuery.value) params.search = searchQuery.value
 
-    // Ambil list transaksi issued
     const response = await api.get('/reports/transactions', { params })
     const res = response.data
     const trxList: any[] = res.data ?? []
@@ -523,23 +462,33 @@ const fetchTickets = async () => {
       const schedule    = detail.schedule ?? {}
       const ticketList  = detail.tickets ?? []
       const passengerList = detail.passengers ?? []
+
+      // Status dari tiket (bukan transaksi) karena reschedule hanya ubah status tiket
+      const firstTicket = ticketList[0]
+      const ticketStatus = firstTicket?.status ?? transaction.status ?? 'paid'
+
+      // Jika rescheduled, pakai schedule dari tiket (sudah diupdate)
+      const activeSchedule = (ticketStatus === 'rescheduled' && firstTicket?.schedule)
+        ? firstTicket.schedule
+        : schedule
+
       const seats = ticketList.length > 0
         ? ticketList.map((t: any) => t.seat?.seat_number).filter(Boolean)
         : passengerList.map((p: any) => p.seat_number).filter(Boolean)
-      const route = schedule.route ?? {}
+      const route = activeSchedule?.route ?? {}
 
       rows.push({
         id: trx.id,
         trx_code: trx.trx_code,
-        status: transaction.status ?? trx.status ?? 'issued',
+        status: ticketStatus,
         customer_name: transaction.customer_name ?? '-',
         customer_phone: transaction.customer_phone ?? '-',
         passengers: passengerList,
         route: route.origin_city && route.destination_city
           ? `${route.origin_city} → ${route.destination_city}`
           : trx.mitra ?? '-',
-        vehicle: schedule.vehicle?.name ?? '-',
-        travel_date: transaction.travel_date ?? trx.tanggal,
+        vehicle: activeSchedule?.vehicle?.name ?? '-',
+        travel_date: activeSchedule?.travel_date ?? transaction.travel_date ?? trx.tanggal,
         seats: seats.length > 0 ? seats : ['—'],
         ticket_ids: ticketList.map((t: any) => t.id),
       })
@@ -612,46 +561,24 @@ const printFromDetail = async () => {
 const loadPrintData = async (ticketId: number) => {
   showPrintDialog.value = true
   loadingPrint.value = true
-  
+
   try {
+    // Coba ambil dari /tickets/{id}/data dulu
     const response = await api.get(`/tickets/${ticketId}/data`)
     printData.value = response.data.data
+
+    // Cari trx_code dari tickets list untuk panggil /transactions/{trx_code}/print
+    const matchedTicket = tickets.value.find(t => t.ticket_ids?.includes(ticketId))
+    if (matchedTicket?.trx_code) {
+      const printRes = await api.get(`/transactions/${matchedTicket.trx_code}/print`)
+      ticketPrintData.value = printRes.data.message ?? printRes.data.data
+    }
   } catch (error) {
     toast({ title: 'Gagal memuat data tiket', variant: 'destructive' })
     showPrintDialog.value = false
   } finally {
     loadingPrint.value = false
   }
-}
-
-const doPrint = () => {
-  const printArea = document.getElementById('print-area')
-  if (!printArea) {
-    toast({ title: 'Area cetak tidak ditemukan', variant: 'destructive' })
-    return
-  }
-  const win = window.open('', '_blank')
-  if (!win) {
-    toast({ title: 'Popup diblokir browser', variant: 'destructive' })
-    return
-  }
-  
-  win.document.write(`
-    <html>
-      <head>
-        <title>E-Tiket ${printData.value?.booking_code}</title>
-        <style>
-          body { font-family: Arial, sans-serif; margin: 20px; }
-          * { box-sizing: border-box; }
-        </style>
-      </head>
-      <body>${printArea.innerHTML}</body>
-    </html>
-  `)
-  win.document.close()
-  win.focus()
-  win.print()
-  win.close()
 }
 
 const formatDate = (date: string) => {
@@ -742,7 +669,6 @@ const goToSeatStep = async () => {
   try {
     const res = await api.get('/tickets/reschedule/seats', { params: { schedule_id: selectedSchedule.value.id } })
     availableSeats.value = res.data.data ?? []
-    // Bangun seats_by_row dari flat list
     seatsByRow.value = availableSeats.value.reduce((acc: Record<string, any[]>, seat: any) => {
       const row = String(seat.row)
       if (!acc[row]) acc[row] = []

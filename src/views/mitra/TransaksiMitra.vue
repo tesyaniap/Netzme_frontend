@@ -430,14 +430,12 @@ onMounted(() => {
       <SiteHeader />
 
       <div class="flex flex-1 flex-col">
-        <div class="flex flex-1 flex-col gap-4 p-4 md:gap-6 md:p-6">
+        <div class="flex flex-1 flex-col gap-3 p-3 sm:gap-4 sm:p-4 md:gap-6 md:p-6">
 
           <!-- PAGE HEADER -->
           <div>
-            <h1 class="text-3xl font-bold tracking-tight">Transaksi Tiket</h1>
-            <p class="text-muted-foreground mt-1">
-              Cari dan lakukan pemesanan tiket bus.
-            </p>
+            <h1 class="text-2xl sm:text-3xl font-bold tracking-tight">Transaksi Tiket</h1>
+            <p class="text-muted-foreground mt-1 text-sm sm:text-base">Cari dan lakukan pemesanan tiket bus.</p>
           </div>
 
           <!-- BUTTON TO OPEN SEARCH -->
@@ -450,7 +448,7 @@ onMounted(() => {
           </Card>
 
           <!-- STATISTICS & HISTORY SECTION -->
-          <div class="grid gap-4 md:grid-cols-2">
+          <div class="grid gap-4 grid-cols-1 md:grid-cols-2">
             <!-- LEFT: Statistics -->
             <Card>
               <CardHeader>

@@ -1,0 +1,484 @@
+A. Manajemen Jadwal
+
+1. Filter
+<div class="flex flex-col sm:flex-row gap-3">
+          <select
+            v-model="routeFilter"
+            @change="fetchSchedules"
+            class="flex h-9 rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors focus:outline-none focus:ring-1 focus:ring-ring flex-1"
+          >
+            <option value="">Semua Rute</option>
+            <option v-for="route in routes" :key="route.id" :value="route.id">
+              {{ route.origin_city?.name }} → {{ route.destination_city?.name }}
+            </option>
+          </select>
+          <Input v-model="dateFilter" type="date" @change="fetchSchedules" class="h-9 flex-1 sm:max-w-[200px]" />
+          <Button variant="outline" size="sm" @click="clearFilters" class="h-9 px-4 w-full sm:w-auto">Reset</Button>
+        </div>
+
+2. Button tambah jadwal
+<Button @click="openScheduleDialog" class="w-full sm:w-auto">
+            <Plus class="mr-2 h-4 w-4" />
+            Tambah Jadwal
+          </Button>
+
+3. Dialog buat jadwal
+<Dialog v-model:open="showScheduleDialog">
+      <DialogContent class="max-w-lg max-h-[90vh] overflow-y-auto">
+        <DialogTitle>Tambah Jadwal</DialogTitle>
+        <DialogDescription>Buat jadwal keberangkatan baru.</DialogDescription>
+
+        <div class="space-y-5 pt-2">
+
+          <!-- ── RUTE ── -->
+          <div class="space-y-2">
+            <div class="flex items-center justify-between">
+              <Label class="text-sm font-medium">Rute</Label>
+              <button
+                type="button"
+                @click="toggleRouteMode"
+                class="text-xs bg-gray-800 text-white px-2 py-1 rounded hover:bg-gray-700 transition-colors"
+              >
+                {{ routeMode === 'select' ? ' Buat rute baru' : ' Pilih rute yang ada' }}
+              </button>
+            </div>
+
+            <!-- Mode: pilih existing -->
+            <div v-if="routeMode === 'select'">
+              <select
+                v-model="scheduleForm.route_id"
+                class="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-ring"
+              >
+                <option value="">-- Pilih rute --</option>
+                <option v-for="route in routes" :key="route.id" :value="route.id">
+                  {{ route.origin_city?.name }} → {{ route.destination_city?.name }}
+                </option>
+              </select>
+
+              <!-- Preview rute terpilih -->
+              <div v-if="selectedRoute" class="mt-2 px-3 py-2 rounded-md bg-muted text-xs text-muted-foreground">
+                Terminal: {{ selectedRoute.departure_terminal?.name }} → {{ selectedRoute.arrival_terminal?.name }}
+              </div>
+            </div>
+
+            <!-- Mode: buat rute baru -->
+            <div v-else class="rounded-md border border-dashed p-4 space-y-3">
+              <div class="grid grid-cols-2 gap-3">
+                <div class="space-y-1.5">
+                  <Label class="text-xs text-muted-foreground">Kota asal</Label>
+                  <select
+                    v-model="newRoute.origin_city_id"
+                    @change="loadOriginTerminals"
+                    class="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-ring"
+                  >
+                    <option value="">Pilih kota</option>
+                    <option v-for="city in cities" :key="city.id" :value="city.id">{{ city.name }}</option>
+                  </select>
+                </div>
+                <div class="space-y-1.5">
+                  <Label class="text-xs text-muted-foreground">Terminal keberangkatan</Label>
+                  <select
+                    v-model="newRoute.departure_terminal_id"
+                    :disabled="!newRoute.origin_city_id"
+                    class="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-ring disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <option value="">Pilih terminal</option>
+                    <option v-for="t in originTerminals" :key="t.id" :value="t.id">{{ t.name }}</option>
+                  </select>
+                </div>
+                <div class="space-y-1.5">
+                  <Label class="text-xs text-muted-foreground">Kota tujuan</Label>
+                  <select
+                    v-model="newRoute.destination_city_id"
+                    @change="loadDestinationTerminals"
+                    class="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-ring"
+                  >
+                    <option value="">Pilih kota</option>
+                    <option v-for="city in cities" :key="city.id" :value="city.id">{{ city.name }}</option>
+                  </select>
+                </div>
+                <div class="space-y-1.5">
+                  <Label class="text-xs text-muted-foreground">Terminal kedatangan</Label>
+                  <select
+                    v-model="newRoute.arrival_terminal_id"
+                    :disabled="!newRoute.destination_city_id"
+                    class="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-ring disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <option value="">Pilih terminal</option>
+                    <option v-for="t in destinationTerminals" :key="t.id" :value="t.id">{{ t.name }}</option>
+                  </select>
+                </div>
+              </div>
+              <div class="space-y-1.5">
+                <Label class="text-xs text-muted-foreground">Jarak (km)</Label>
+                <Input v-model.number="newRoute.distance" type="number" placeholder="cth: 150" class="h-9" />
+              </div>
+              <Button
+                type="button"
+                size="sm"
+                class="w-full h-9"
+                @click="createRouteInline"
+                :disabled="creatingRoute"
+              >
+                {{ creatingRoute ? 'Menyimpan rute...' : 'Simpan & gunakan rute ini' }}
+              </Button>
+            </div>
+          </div>
+
+          <!-- ── KENDARAAN ── -->
+          <div class="space-y-1.5">
+            <Label class="text-sm font-medium">Kendaraan</Label>
+            <select
+              v-model="scheduleForm.vehicle_id"
+              class="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-ring"
+            >
+              <option value="">-- Pilih kendaraan --</option>
+              <option v-for="v in vehicles" :key="v.id" :value="v.id">
+                {{ v.name }} · {{ v.plate_number }} ({{ v.seat_capacity }} kursi)
+              </option>
+            </select>
+          </div>
+
+          <!-- ── TANGGAL ── -->
+          <div class="space-y-1.5">
+            <Label class="text-sm font-medium">Tanggal Perjalanan</Label>
+            <Input v-model="scheduleForm.travel_date" type="date" class="h-9" />
+            <p class="text-xs text-muted-foreground">Kosongkan jika jadwal berlaku harian</p>
+          </div>
+
+          <!-- ── JAM ── -->
+          <div class="grid grid-cols-2 gap-4">
+            <div class="space-y-1.5">
+              <Label class="text-sm font-medium">Jam Berangkat</Label>
+              <Input v-model="scheduleForm.departure_time" type="time" class="h-9" />
+            </div>
+            <div class="space-y-1.5">
+              <Label class="text-sm font-medium">Jam Tiba</Label>
+              <Input v-model="scheduleForm.arrival_time" type="time" class="h-9" />
+            </div>
+          </div>
+
+          <!-- ── HARGA ── -->
+          <div class="space-y-1.5">
+            <Label class="text-sm font-medium">Harga Tiket (Rp)</Label>
+            <Input v-model.number="scheduleForm.price" type="number" placeholder="cth: 150000" class="h-9" />
+          </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="flex justify-end gap-2 pt-4 border-t mt-2">
+          <Button variant="outline" @click="showScheduleDialog = false">Batal</Button>
+          <Button @click="submitSchedule" :disabled="submitting">
+            {{ submitting ? 'Menyimpan...' : 'Buat Jadwal' }}
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
+
+4. form buat rute baru
+<div v-else class="rounded-md border border-dashed p-4 space-y-3">
+              <div class="grid grid-cols-2 gap-3">
+                <div class="space-y-1.5">
+                  <Label class="text-xs text-muted-foreground">Kota asal</Label>
+                  <select
+                    v-model="newRoute.origin_city_id"
+                    @change="loadOriginTerminals"
+                    class="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-ring"
+                  >
+                    <option value="">Pilih kota</option>
+                    <option v-for="city in cities" :key="city.id" :value="city.id">{{ city.name }}</option>
+                  </select>
+                </div>
+                <div class="space-y-1.5">
+                  <Label class="text-xs text-muted-foreground">Terminal keberangkatan</Label>
+                  <select
+                    v-model="newRoute.departure_terminal_id"
+                    :disabled="!newRoute.origin_city_id"
+                    class="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-ring disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <option value="">Pilih terminal</option>
+                    <option v-for="t in originTerminals" :key="t.id" :value="t.id">{{ t.name }}</option>
+                  </select>
+                </div>
+                <div class="space-y-1.5">
+                  <Label class="text-xs text-muted-foreground">Kota tujuan</Label>
+                  <select
+                    v-model="newRoute.destination_city_id"
+                    @change="loadDestinationTerminals"
+                    class="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-ring"
+                  >
+                    <option value="">Pilih kota</option>
+                    <option v-for="city in cities" :key="city.id" :value="city.id">{{ city.name }}</option>
+                  </select>
+                </div>
+                <div class="space-y-1.5">
+                  <Label class="text-xs text-muted-foreground">Terminal kedatangan</Label>
+                  <select
+                    v-model="newRoute.arrival_terminal_id"
+                    :disabled="!newRoute.destination_city_id"
+                    class="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-ring disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <option value="">Pilih terminal</option>
+                    <option v-for="t in destinationTerminals" :key="t.id" :value="t.id">{{ t.name }}</option>
+                  </select>
+                </div>
+              </div>
+              <div class="space-y-1.5">
+                <Label class="text-xs text-muted-foreground">Jarak (km)</Label>
+                <Input v-model.number="newRoute.distance" type="number" placeholder="cth: 150" class="h-9" />
+              </div>
+              <Button
+                type="button"
+                size="sm"
+                class="w-full h-9"
+                @click="createRouteInline"
+                :disabled="creatingRoute"
+              >
+                {{ creatingRoute ? 'Menyimpan rute...' : 'Simpan & gunakan rute ini' }}
+              </Button>
+            </div>
+          </div>
+
+5. Button Hapus
+<Button size="sm" variant="destructive" @click="deleteSchedule(schedule.id)" class="h-7 sm:h-8 px-2 sm:px-3 text-xs">Hapus</Button>
+
+6. Dialog Hapus
+<Dialog v-model:open="showDeleteDialog">
+      <DialogContent class="max-w-sm">
+        <DialogTitle>Hapus Jadwal?</DialogTitle>
+        <DialogDescription>Jadwal yang dihapus tidak bisa dikembalikan.</DialogDescription>
+        <div class="flex justify-end gap-2 pt-2">
+          <Button variant="outline" @click="showDeleteDialog = false">Batal</Button>
+          <Button variant="destructive" @click="confirmDelete">Hapus</Button>
+        </div>
+      </DialogContent>
+    </Dialog>
+
+7. Toast jadwal berhasil dihapus
+const confirmDelete = async () => {
+  if (!scheduleToDelete.value) return
+  try {
+    await api.delete(`/schedules/${scheduleToDelete.value}`)
+    toast({ title: 'Berhasil', description: 'Jadwal dihapus' })
+    fetchSchedules()
+  } catch {
+    toast({ title: 'Error', description: 'Gagal menghapus jadwal', variant: 'destructive' })
+  } finally {
+    showDeleteDialog.value = false
+    scheduleToDelete.value = null
+  }
+}
+
+B. APPROVAL TopUp
+
+1. Filter Top Up
+<div class="flex flex-wrap gap-2 mb-4">
+                <select v-model="filterMitra" class="flex h-9 rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-ring">
+                  <option value="">Semua Mitra</option>
+                  <option v-for="name in mitraOptions" :key="name" :value="name">{{ name }}</option>
+                </select>
+                <select v-model="filterStatus" class="flex h-9 rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-ring">
+                  <option value="">Semua Status</option>
+                  <option value="pending">Pending</option>
+                  <option value="approved">Approved</option>
+                  <option value="rejected">Rejected</option>
+                </select>
+                <select v-model="filterYear" class="flex h-9 rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-ring">
+                  <option value="">Semua Tahun</option>
+                  <option v-for="y in yearOptions" :key="y" :value="y">{{ y }}</option>
+                </select>
+                <select v-model="filterMonth" class="flex h-9 rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-ring">
+                  <option value="">Semua Bulan</option>
+                  <option value="1">Januari</option>
+                  <option value="2">Februari</option>
+                  <option value="3">Maret</option>
+                  <option value="4">April</option>
+                  <option value="5">Mei</option>
+                  <option value="6">Juni</option>
+                  <option value="7">Juli</option>
+                  <option value="8">Agustus</option>
+                  <option value="9">September</option>
+                  <option value="10">Oktober</option>
+                  <option value="11">November</option>
+                  <option value="12">Desember</option>
+                </select>
+                <Button variant="outline" size="sm" class="h-9" @click="resetFilters">Reset</Button>
+              </div>
+              <div v-if="loading" class="text-center py-8">Loading...</div>
+              <div v-else-if="filteredTopups.length === 0" class="text-center py-8 text-muted-foreground">
+                Tidak ada data top up
+              </div>
+              <Table v-else>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>ID Top Up</TableHead>
+                    <TableHead>Mitra</TableHead>
+                    <TableHead>Nominal</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Tanggal</TableHead>
+                    <TableHead class="text-right">Aksi</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  <TableRow v-for="topup in filteredTopups" :key="topup.id">
+                    <TableCell class="font-medium">{{ topup.id }}</TableCell>
+                    <TableCell>{{ topup.mitra?.name || '-' }}</TableCell>
+                    <TableCell>{{ formatCurrency(topup.amount) }}</TableCell>
+                    <TableCell>
+                      <Badge :class="getStatusClass(topup.status)">
+                        {{ topup.status }}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>{{ formatDateTime(topup.created_at) }}</TableCell>
+                    <TableCell class="text-right">
+                      <div class="flex gap-2 justify-end">
+                        <Button size="sm" variant="outline" @click="viewDetail(topup)">
+                          Detail
+                        </Button>
+                        <div v-if="topup.status === 'pending'" class="flex gap-2">
+                          <Button size="sm" @click="approveTopup(topup.id)">
+                            Approve
+                          </Button>
+                          <Button size="sm" variant="destructive" @click="openRejectDialog(topup)">
+                            Reject
+                          </Button>
+                        </div>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    </SidebarInset>
+
+2. komponen tombol aksi
+<div class="flex gap-2 justify-end">
+                        <Button size="sm" variant="outline" @click="viewDetail(topup)">
+                          Detail
+                        </Button>
+                        <div v-if="topup.status === 'pending'" class="flex gap-2">
+                          <Button size="sm" @click="approveTopup(topup.id)">
+                            Approve
+                          </Button>
+                          <Button size="sm" variant="destructive" @click="openRejectDialog(topup)">
+                            Reject
+                          </Button>
+                        </div>
+
+3. Badge Status
+<Badge :class="getStatusClass(topup.status)">
+                        {{ topup.status }}
+                      </Badge>
+
+4. Dialog Detail
+<Dialog v-model:open="showDetailDialog">
+      <DialogContent class="max-w-2xl">
+        <DialogTitle>Detail Top Up</DialogTitle>
+        <DialogDescription>Informasi lengkap permintaan top up</DialogDescription>
+        <div v-if="selectedTopup" class="space-y-4 py-4">
+          <div class="grid grid-cols-2 gap-4">
+            <div class="space-y-2">
+              <Label class="text-muted-foreground">ID Top Up</Label>
+              <p class="font-medium">{{ selectedTopup.id }}</p>
+            </div>
+            <div class="space-y-2">
+              <Label class="text-muted-foreground">Status</Label>
+              <Badge :class="getStatusClass(selectedTopup.status)">
+                {{ selectedTopup.status }}
+              </Badge>
+            </div>
+            <div class="space-y-2">
+              <Label class="text-muted-foreground">Nama Mitra</Label>
+              <p class="font-medium">{{ selectedTopup.mitra?.name || '-' }}</p>
+            </div>
+            <div class="space-y-2">
+              <Label class="text-muted-foreground">Email Mitra</Label>
+              <p class="font-medium">{{ selectedTopup.mitra?.email || '-' }}</p>
+            </div>
+            <div class="space-y-2">
+              <Label class="text-muted-foreground">Nominal Top Up</Label>
+              <p class="text-xl font-bold">{{ formatCurrency(selectedTopup.amount) }}</p>
+            </div>
+            <div class="space-y-2">
+              <Label class="text-muted-foreground">Metode Pembayaran</Label>
+              <p class="font-medium">{{ selectedTopup.payment_method || '-' }}</p>
+            </div>
+            <div class="space-y-2">
+              <Label class="text-muted-foreground">Tanggal Permintaan</Label>
+              <p class="font-medium">{{ formatDateTime(selectedTopup.created_at) }}</p>
+            </div>
+            <div class="space-y-2">
+              <Label class="text-muted-foreground">Terakhir Update</Label>
+              <p class="font-medium">{{ formatDateTime(selectedTopup.updated_at) }}</p>
+            </div>
+          </div>
+          
+          <div v-if="selectedTopup.status === 'approved'" class="space-y-2 p-3 bg-muted/50 rounded-lg">
+            <Label class="text-muted-foreground">Diapprove pada</Label>
+            <p class="font-medium text-sm">{{ selectedTopup.approved_at ? formatDateTime(selectedTopup.approved_at) : '-' }}</p>
+          </div>
+
+          <div v-if="selectedTopup.status === 'rejected' && (selectedTopup.reject_reason || selectedTopup.rejection_reason)" class="space-y-2 p-3 bg-destructive/10 border border-destructive/20 rounded-lg">
+            <Label class="text-destructive">Alasan Penolakan</Label>
+            <p class="text-sm text-destructive font-medium">{{ selectedTopup.reject_reason || selectedTopup.rejection_reason }}</p>
+          </div>
+
+          <div v-if="selectedTopup.proof_of_payment" class="space-y-2">
+            <Label class="text-muted-foreground">Bukti Transfer</Label>
+            <img :src="selectedTopup.proof_of_payment" alt="Bukti Transfer" class="w-full max-h-96 object-contain border rounded-lg" />
+          </div>
+
+          <div v-if="selectedTopup.notes" class="space-y-2">
+            <Label class="text-muted-foreground">Catatan</Label>
+            <p class="text-sm">{{ selectedTopup.notes }}</p>
+          </div>
+        </div>
+        <div class="flex justify-end gap-2">
+        <Button variant="outline" @click="showDetailDialog = false">Tutup</Button>
+          <div v-if="selectedTopup?.status === 'pending'" class="flex gap-2">
+            <Button @click="approveTopup(selectedTopup.id)">
+              Approve
+            </Button>
+            <Button variant="destructive" @click="openRejectDialog(selectedTopup)">
+              Reject
+            </Button>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+
+5. Dialog Tolak permintaan topup
+<Dialog v-model:open="showRejectDialog">
+      <DialogContent class="max-w-md">
+        <DialogTitle>Tolak Permintaan Top Up</DialogTitle>
+        <DialogDescription>Masukkan alasan penolakan untuk dikirim ke mitra</DialogDescription>
+        <div class="space-y-3 py-2">
+          <div class="p-3 bg-muted/50 rounded-lg text-sm">
+            <p class="text-muted-foreground">Mitra</p>
+            <p class="font-medium">{{ rejectTarget?.mitra?.name }}</p>
+            <p class="text-muted-foreground mt-1">Nominal</p>
+            <p class="font-medium">{{ formatCurrency(rejectTarget?.amount) }}</p>
+          </div>
+          <div class="space-y-1.5">
+            <Label>Alasan Penolakan <span class="text-destructive">*</span></Label>
+            <textarea
+              v-model="rejectReason"
+              rows="3"
+              placeholder="Contoh: Bukti transfer tidak valid, nominal tidak sesuai..."
+              class="w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-ring resize-none"
+            />
+            <p v-if="rejectError" class="text-xs text-destructive">{{ rejectError }}</p>
+          </div>
+        </div>
+        <div class="flex justify-end gap-2 pt-2">
+          <Button variant="outline" @click="showRejectDialog = false">Batal</Button>
+          <Button variant="destructive" :disabled="rejecting" @click="confirmReject">
+            {{ rejecting ? 'Menolak...' : 'Tolak Top Up' }}
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
+

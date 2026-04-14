@@ -5,10 +5,10 @@
       <SiteHeader />
       
       <div class="flex flex-1 flex-col">
-        <div class="flex flex-1 flex-col gap-4 p-4 md:gap-6 md:p-6">
+        <div class="flex flex-1 flex-col gap-3 p-3 sm:gap-4 sm:p-4 md:gap-6 md:p-6">
           <div>
-            <h1 class="text-3xl font-bold tracking-tight">Approval Top Up</h1>
-            <p class="text-muted-foreground mt-1">Kelola permintaan top up dari mitra</p>
+            <h1 class="text-2xl sm:text-3xl font-bold tracking-tight">Approval Top Up</h1>
+            <p class="text-muted-foreground mt-1 text-sm sm:text-base">Kelola permintaan top up dari mitra</p>
           </div>
 
           <Card>
@@ -19,21 +19,21 @@
             <CardContent>
               <!-- Filter Bar -->
               <div class="flex flex-wrap gap-2 mb-4">
-                <select v-model="filterMitra" class="flex h-9 rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-ring">
+                <select v-model="filterMitra" class="flex h-9 rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-ring w-full sm:w-auto">
                   <option value="">Semua Mitra</option>
                   <option v-for="name in mitraOptions" :key="name" :value="name">{{ name }}</option>
                 </select>
-                <select v-model="filterStatus" class="flex h-9 rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-ring">
+                <select v-model="filterStatus" class="flex h-9 rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-ring w-full sm:w-auto">
                   <option value="">Semua Status</option>
                   <option value="pending">Pending</option>
                   <option value="approved">Approved</option>
                   <option value="rejected">Rejected</option>
                 </select>
-                <select v-model="filterYear" class="flex h-9 rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-ring">
+                <select v-model="filterYear" class="flex h-9 rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-ring w-full sm:w-auto">
                   <option value="">Semua Tahun</option>
                   <option v-for="y in yearOptions" :key="y" :value="y">{{ y }}</option>
                 </select>
-                <select v-model="filterMonth" class="flex h-9 rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-ring">
+                <select v-model="filterMonth" class="flex h-9 rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-ring w-full sm:w-auto">
                   <option value="">Semua Bulan</option>
                   <option value="1">Januari</option>
                   <option value="2">Februari</option>
@@ -48,52 +48,58 @@
                   <option value="11">November</option>
                   <option value="12">Desember</option>
                 </select>
-                <Button variant="outline" size="sm" class="h-9" @click="resetFilters">Reset</Button>
+                <Button variant="outline" size="sm" class="h-9 w-full sm:w-auto" @click="resetFilters">Reset</Button>
               </div>
               <div v-if="loading" class="text-center py-8">Loading...</div>
-              <div v-else-if="filteredTopups.length === 0" class="text-center py-8 text-muted-foreground">
-                Tidak ada data top up
-              </div>
-              <Table v-else>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>ID Top Up</TableHead>
-                    <TableHead>Mitra</TableHead>
-                    <TableHead>Nominal</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Tanggal</TableHead>
-                    <TableHead class="text-right">Aksi</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  <TableRow v-for="topup in filteredTopups" :key="topup.id">
-                    <TableCell class="font-medium">{{ topup.id }}</TableCell>
-                    <TableCell>{{ topup.mitra?.name || '-' }}</TableCell>
-                    <TableCell>{{ formatCurrency(topup.amount) }}</TableCell>
-                    <TableCell>
-                      <Badge :class="getStatusClass(topup.status)">
-                        {{ topup.status }}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>{{ formatDateTime(topup.created_at) }}</TableCell>
-                    <TableCell class="text-right">
-                      <div class="flex gap-2 justify-end">
-                        <Button size="sm" variant="outline" @click="viewDetail(topup)">
-                          Detail
-                        </Button>
-                        <div v-if="topup.status === 'pending'" class="flex gap-2">
-                          <Button size="sm" @click="approveTopup(topup.id)">
-                            Approve
-                          </Button>
-                          <Button size="sm" variant="destructive" @click="openRejectDialog(topup)">
-                            Reject
-                          </Button>
+              <div v-else-if="filteredTopups.length === 0" class="text-center py-8 text-muted-foreground">Tidak ada data top up</div>
+              <div v-else class="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>ID Top Up</TableHead>
+                      <TableHead>Mitra</TableHead>
+                      <TableHead>Nominal</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Tanggal</TableHead>
+                      <TableHead class="text-right">Aksi</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    <TableRow v-for="topup in filteredTopups" :key="topup.id">
+                      <TableCell class="font-medium text-sm">{{ topup.id }}</TableCell>
+                      <TableCell class="text-sm">{{ topup.mitra?.name || '-' }}</TableCell>
+                      <TableCell class="text-sm">{{ formatCurrency(topup.amount) }}</TableCell>
+                      <TableCell>
+                        <Badge :class="getStatusClass(topup.status)">{{ topup.status }}</Badge>
+                      </TableCell>
+                      <TableCell class="text-sm">{{ formatDateTime(topup.created_at) }}</TableCell>
+                      <TableCell class="text-right">
+                        <div class="flex flex-col sm:flex-row gap-1 sm:gap-2 sm:justify-end">
+                          <Button size="sm" variant="outline" @click="viewDetail(topup)">Detail</Button>
+                          <div v-if="topup.status === 'pending'" class="flex gap-1 sm:gap-2">
+                            <Button size="sm" @click="approveTopup(topup.id)">Approve</Button>
+                            <Button size="sm" variant="destructive" @click="openRejectDialog(topup)">Reject</Button>
+                          </div>
                         </div>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                </TableBody>
-              </Table>
+                      </TableCell>
+                    </TableRow>
+                  </TableBody>
+                </Table>
+              </div>
+              <div v-if="totalPages > 1" class="flex items-center justify-between px-4 py-3 border-t">
+                <p class="text-sm text-muted-foreground">
+                  Menampilkan {{ (currentPage - 1) * perPage + 1 }}–{{ Math.min(currentPage * perPage, totalTopups) }} dari {{ totalTopups }} data
+                </p>
+                <div class="flex items-center gap-2">
+                  <Button size="sm" variant="outline" :disabled="currentPage === 1" @click="changePage(currentPage - 1)">
+                    Sebelumnya
+                  </Button>
+                  <span class="text-sm">{{ currentPage }} / {{ totalPages }}</span>
+                  <Button size="sm" variant="outline" :disabled="currentPage === totalPages" @click="changePage(currentPage + 1)">
+                    Selanjutnya
+                  </Button>
+                </div>
+              </div>
             </CardContent>
           </Card>
         </div>
@@ -153,10 +159,52 @@
             <p class="text-sm text-destructive font-medium">{{ selectedTopup.reject_reason || selectedTopup.rejection_reason }}</p>
           </div>
 
-          <div v-if="selectedTopup.proof_of_payment" class="space-y-2">
-            <Label class="text-muted-foreground">Bukti Transfer</Label>
-            <img :src="selectedTopup.proof_of_payment" alt="Bukti Transfer" class="w-full max-h-96 object-contain border rounded-lg" />
+          <div class="space-y-2 border rounded-lg p-4">
+            <div class="flex items-center justify-between">
+              <Label class="text-muted-foreground font-medium">Bukti Transfer</Label>
+              <template v-if="selectedTopup.proof_file || selectedTopup.proof_file_url">
+                <Button size="sm" variant="outline" @click="showProof = !showProof">
+                  {{ showProof ? 'Sembunyikan' : 'Lihat Bukti' }}
+                </Button>
+              </template>
+              <span v-else class="text-xs text-muted-foreground italic">Tidak ada file</span>
+            </div>
+            <div v-if="showProof && (selectedTopup.proof_file || selectedTopup.proof_file_url)" class="mt-2">
+              <img
+                v-if="isImageFile(selectedTopup.proof_file)"
+                :src="selectedTopup.proof_file_url"
+                alt="Bukti Transfer"
+                class="w-full max-h-[300px] object-contain border rounded-lg bg-muted/30 cursor-zoom-in hover:opacity-90 transition-opacity"
+                @click="zoomImage = selectedTopup.proof_file_url"
+              />
+              <iframe
+                v-else-if="isPdfFile(selectedTopup.proof_file)"
+                :src="selectedTopup.proof_file_url"
+                class="w-full h-[400px] border rounded-lg"
+                title="Bukti Transfer PDF"
+              />
+              <p v-else class="text-sm text-muted-foreground italic">Format file tidak didukung untuk preview</p>
+            </div>
           </div>
+
+          <!-- Lightbox -->
+          <Teleport to="body">
+            <div
+              v-if="zoomImage"
+              class="fixed inset-0 z-[9999] bg-black/80 flex items-center justify-center"
+              @click="zoomImage = null"
+            >
+              <img
+                :src="zoomImage"
+                class="max-w-[90vw] max-h-[90vh] object-contain rounded-lg shadow-2xl"
+                @click.stop
+              />
+              <button
+                class="absolute top-4 right-4 text-white text-2xl font-bold hover:text-gray-300"
+                @click="zoomImage = null"
+              >✕</button>
+            </div>
+          </Teleport>
 
           <div v-if="selectedTopup.notes" class="space-y-2">
             <Label class="text-muted-foreground">Catatan</Label>
@@ -212,7 +260,8 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref, computed } from 'vue'
+import { onMounted, ref, computed, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
@@ -230,12 +279,21 @@ const loading = ref(false)
 const topups = ref<any[]>([])
 const showDetailDialog = ref(false)
 const selectedTopup = ref<any>(null)
+const showProof = ref(false)
+const zoomImage = ref<string | null>(null)
 
 // Filter state
 const filterMitra = ref('')
 const filterStatus = ref('')
 const filterYear = ref('')
 const filterMonth = ref('')
+
+const route = useRoute()
+const router = useRouter()
+const currentPage = ref(Number(Array.isArray(route.query.page) ? route.query.page[0] : route.query.page) || 1)
+const perPage = ref(10)
+const totalTopups = ref(0)
+const totalPages = computed(() => Math.ceil(totalTopups.value / perPage.value))
 
 const mitraOptions = computed(() => {
   const names = [...new Set(topups.value.map(t => t.mitra?.name).filter(Boolean))]
@@ -275,7 +333,17 @@ const resetFilters = () => {
   filterStatus.value = ''
   filterYear.value = ''
   filterMonth.value = ''
+  changePage(1)
 }
+
+const syncQueryPage = (page: number) => {
+  router.push({ query: { ...route.query, page: String(page) } })
+}
+
+watch(() => route.query.page, (newPage) => {
+  currentPage.value = Number(Array.isArray(newPage) ? newPage[0] : newPage) || 1
+  fetchTopups()
+})
 
 // Reject dialog state
 const showRejectDialog = ref(false)
@@ -317,15 +385,33 @@ onMounted(() => {
   fetchTopups()
 })
 
+const changePage = (page: number) => {
+  currentPage.value = page
+  syncQueryPage(page)
+  fetchTopups()
+}
+
 const fetchTopups = async () => {
   loading.value = true
   try {
-    const response = await api.get('/topups')
+    const response = await api.get('/topups', {
+      params: {
+        page: currentPage.value,
+        limit: perPage.value,
+        ...(filterStatus.value && { status: filterStatus.value }),
+        ...(filterMitra.value && { mitra: filterMitra.value }),
+        ...(filterYear.value && { year: filterYear.value }),
+        ...(filterMonth.value && { month: filterMonth.value })
+      }
+    })
+
     const data = response.data.message?.data || response.data.data?.data || response.data.data || []
     topups.value = Array.isArray(data) ? data : []
+    totalTopups.value = response.data.total ?? response.data.data?.total ?? response.data.message?.total ?? 0
   } catch {
     toast({ title: 'Gagal memuat data top up', variant: 'destructive' })
     topups.value = []
+    totalTopups.value = 0
   } finally {
     loading.value = false
   }
@@ -364,6 +450,7 @@ const rejectTopup = async (id: number) => {
 
 const viewDetail = (topup: any) => {
   selectedTopup.value = topup
+  showProof.value = false
   showDetailDialog.value = true
 }
 
@@ -391,5 +478,15 @@ const getStatusClass = (status: string) => {
   if (s === 'pending') return 'bg-gray-100 text-gray-700 border-gray-300 hover:bg-gray-100'
   if (s === 'rejected') return 'bg-red-100 text-red-700 border-red-300 hover:bg-red-100'
   return 'bg-gray-100 text-gray-700 border-gray-300'
+}
+
+const isImageFile = (filename: string) => {
+  if (!filename) return false
+  return /\.(jpg|jpeg|png|gif|webp)$/i.test(filename)
+}
+
+const isPdfFile = (filename: string) => {
+  if (!filename) return false
+  return /\.pdf$/i.test(filename)
 }
 </script>

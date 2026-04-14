@@ -1,0 +1,47 @@
+JURNAL KEGIATAN PROYEK BRIDGE-SYSTEM-H2H (SISI ADMIN)
+Periode: 29 Januari 2026 - 13 Februari 2026
+Catatan: Project sudah di-setup dan dashboard admin sudah dibuat sebelumnya.
+
+Tanggal: 29/01/2026
+Topik Pekerjaan: Implementasi tabel dan filter jadwal
+Capaian Pembelajaran: Menampilkan data jadwal dengan filter rute dan tanggal.
+
+Tanggal: 30/01/2026
+Topik Pekerjaan: Form tambah jadwal dengan validasi
+Capaian Pembelajaran: Handling form kompleks dengan validasi dan submit API.
+
+Tanggal: 02/02/2026
+Topik Pekerjaan: Tabel dan filter approval TopUp
+Capaian Pembelajaran: Tampilan data approval dengan status badges dan filter.
+
+Tanggal: 04/02/2026
+Topik Pekerjaan: Tombol approve dan reject TopUp
+Capaian Pembelajaran: Handling aksi approval dengan dialog konfirmasi.
+
+Tanggal: 05/02/2026
+Topik Pekerjaan: Dialog reject dengan form alasan
+Capaian Pembelajaran: Form dalam dialog dengan validasi textarea.
+
+Tanggal: 06/02/2026 
+Topik Pekerjaan: Toast notifications untuk feedback
+Capaian Pembelajaran: Sistem toast untuk success/error messages.
+
+Tanggal: 09/02/2026
+Topik Pekerjaan: Testing dan debugging Vue components
+Capaian Pembelajaran: Debugging dengan Vue DevTools dan console logging.
+
+Tanggal: 10/02/2026
+Topik Pekerjaan: Optimasi performance dengan lazy loading
+Capaian Pembelajaran: Teknik optimasi Vue.js untuk performa lebih baik.
+
+Tanggal: 11/02/2026
+Topik Pekerjaan: Role-based access control
+Capaian Pembelajaran: Conditional rendering berdasarkan user roles.
+
+Tanggal: 12/02/2026
+Topik Pekerjaan: Upload bukti transfer untuk TopUp
+Capaian Pembelajaran: Handling file upload dengan FormData dan preview.
+
+Tanggal: 13/02/2026
+Topik Pekerjaan: Review dan dokumentasi kode admin
+Capaian Pembelajaran: Pentingnya dokumentasi untuk maintainability.

@@ -5,13 +5,13 @@
       <SiteHeader />
       
       <div class="flex flex-1 flex-col">
-        <div class="flex flex-1 flex-col gap-4 p-4 md:gap-6 md:p-6">
-          <div class="flex items-center justify-between">
+        <div class="flex flex-1 flex-col gap-3 p-3 sm:gap-4 sm:p-4 md:gap-6 md:p-6">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
-              <h1 class="text-3xl font-bold tracking-tight">Manajemen User</h1>
-              <p class="text-muted-foreground mt-1">Kelola user dan role sistem</p>
+              <h1 class="text-2xl sm:text-3xl font-bold tracking-tight">Manajemen User</h1>
+              <p class="text-muted-foreground mt-1 text-sm sm:text-base">Kelola user dan role sistem</p>
             </div>
-            <Button @click="showAddDialog = true">
+            <Button @click="showAddDialog = true" class="w-full sm:w-auto">
               <Plus class="h-4 w-4 mr-2" />
               Tambah User
             </Button>
@@ -27,6 +27,7 @@
               <CardDescription>Semua user yang terdaftar dalam sistem</CardDescription>
             </CardHeader>
             <CardContent>
+              <div class="overflow-x-auto">
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -40,8 +41,8 @@
                 </TableHeader>
                 <TableBody>
                   <TableRow v-for="user in userStore.users" :key="user.id">
-                    <TableCell class="font-medium">{{ user.name }}</TableCell>
-                    <TableCell>{{ user.email }}</TableCell>
+                    <TableCell class="font-medium text-sm">{{ user.name }}</TableCell>
+                    <TableCell class="text-sm">{{ user.email }}</TableCell>
                     <TableCell>
                       <Badge :class="getRoleBadgeClass(user.role)">
                         <BadgeCheck v-if="user.role === 'admin'" class="h-3 w-3 mr-1" />
@@ -49,13 +50,13 @@
                         {{ user.role || '-' }}
                       </Badge>
                     </TableCell>
-                    <TableCell>
+                    <TableCell class="text-sm">
                       <span v-if="user.mitra" class="text-sm text-muted-foreground">{{ user.mitra.name }}</span>
                       <span v-else class="text-sm text-muted-foreground">-</span>
                     </TableCell>
-                    <TableCell>{{ formatDate(user.created_at) }}</TableCell>
+                    <TableCell class="text-sm">{{ formatDate(user.created_at) }}</TableCell>
                     <TableCell>
-                      <div class="flex gap-2">
+                      <div class="flex gap-1 sm:gap-2">
                         <Button size="sm" variant="outline" @click="editUser(user)">
                           <Edit class="h-4 w-4" />
                         </Button>
@@ -67,7 +68,7 @@
                   </TableRow>
                 </TableBody>
               </Table>
-            </CardContent>
+              </div>
           </Card>
 
           <!-- Add User Dialog -->

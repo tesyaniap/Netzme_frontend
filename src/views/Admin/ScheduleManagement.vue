@@ -22,7 +22,7 @@
         <div class="flex flex-col sm:flex-row gap-3">
           <select
             v-model="routeFilter"
-            @change="fetchSchedules"
+            @change="debounceFetch"
             class="flex h-9 rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors focus:outline-none focus:ring-1 focus:ring-ring flex-1"
           >
             <option value="">Semua Rute</option>
@@ -30,7 +30,7 @@
               {{ route.origin_city?.name }} → {{ route.destination_city?.name }}
             </option>
           </select>
-          <Input v-model="dateFilter" type="date" @change="fetchSchedules" class="h-9 flex-1 sm:max-w-[200px]" />
+          <Input v-model="dateFilter" type="date" @change="debounceFetch" class="h-9 flex-1 sm:max-w-[200px]" />
           <Button variant="outline" size="sm" @click="clearFilters" class="h-9 px-4 w-full sm:w-auto">Reset</Button>
         </div>
 
@@ -53,7 +53,7 @@
                     <TableHead class="min-w-[100px]">Tanggal</TableHead>
                     <TableHead class="min-w-[80px]">Jam</TableHead>
                     <TableHead class="min-w-[100px]">Harga</TableHead>
-                    <TableHead class="pr-3 sm:pr-6 text-right min-w-[120px]">Aksi</TableHead>
+                    <TableHead class="pr-3 sm:pr-6 text-right min-w-[80px]">Aksi</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -77,14 +77,37 @@
                     </TableCell>
                     <TableCell class="text-xs sm:text-sm font-medium">{{ formatCurrency(schedule.price) }}</TableCell>
                     <TableCell class="pr-3 sm:pr-6 text-right">
-                      <div class="flex flex-col sm:flex-row gap-1 sm:gap-2 sm:justify-end">
-                        <Button size="sm" variant="outline" @click="editSchedule(schedule)" class="h-7 sm:h-8 px-2 sm:px-3 text-xs">Edit</Button>
-                        <Button size="sm" variant="destructive" @click="deleteSchedule(schedule.id)" class="h-7 sm:h-8 px-2 sm:px-3 text-xs">Hapus</Button>
-                      </div>
+                      <Button size="sm" variant="destructive" @click="deleteSchedule(schedule.id)" class="h-7 sm:h-8 px-2 sm:px-3 text-xs">Hapus</Button>
                     </TableCell>
                   </TableRow>
                 </TableBody>
               </Table>
+            </div>
+
+            <!-- Pagination -->
+            <div v-if="totalPages > 1" class="flex items-center justify-between px-3 py-4 border-t">
+              <p class="text-sm text-muted-foreground">
+                Menampilkan {{ (currentPage - 1) * perPage + 1 }} - {{ Math.min(currentPage * perPage, totalSchedules) }} dari {{ totalSchedules }} jadwal
+              </p>
+              <div class="flex items-center space-x-2">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  :disabled="currentPage === 1"
+                  @click="changePage(currentPage - 1)"
+                >
+                  Sebelumnya
+                </Button>
+                <span class="text-sm">Halaman {{ currentPage }} dari {{ totalPages }}</span>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  :disabled="currentPage === totalPages"
+                  @click="changePage(currentPage + 1)"
+                >
+                  Selanjutnya
+                </Button>
+              </div>
             </div>
           </CardContent>
         </Card>
@@ -94,8 +117,8 @@
     <!-- ── Schedule Dialog ── -->
     <Dialog v-model:open="showScheduleDialog">
       <DialogContent class="max-w-lg max-h-[90vh] overflow-y-auto">
-        <DialogTitle>{{ isEdit ? 'Edit Jadwal' : 'Tambah Jadwal' }}</DialogTitle>
-        <DialogDescription>{{ isEdit ? 'Ubah detail jadwal yang sudah ada.' : 'Buat jadwal keberangkatan baru.' }}</DialogDescription>
+        <DialogTitle>Tambah Jadwal</DialogTitle>
+        <DialogDescription>Buat jadwal keberangkatan baru.</DialogDescription>
 
         <div class="space-y-5 pt-2">
 
@@ -238,7 +261,7 @@
         <div class="flex justify-end gap-2 pt-4 border-t mt-2">
           <Button variant="outline" @click="showScheduleDialog = false">Batal</Button>
           <Button @click="submitSchedule" :disabled="submitting">
-            {{ submitting ? 'Menyimpan...' : isEdit ? 'Simpan Perubahan' : 'Buat Jadwal' }}
+            {{ submitting ? 'Menyimpan...' : 'Buat Jadwal' }}
           </Button>
         </div>
       </DialogContent>
@@ -260,7 +283,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -281,6 +305,9 @@ const loading = ref(false)
 const submitting = ref(false)
 const creatingRoute = ref(false)
 
+let timeout: any
+let controller: AbortController | null = null
+
 const schedules = ref<any[]>([])
 const routes = ref<any[]>([])
 const vehicles = ref<any[]>([])
@@ -290,13 +317,16 @@ const destinationTerminals = ref<any[]>([])
 
 const showScheduleDialog = ref(false)
 const showDeleteDialog = ref(false)
-const isEdit = ref(false)
-const selectedSchedule = ref<any>(null)
 const scheduleToDelete = ref<number | null>(null)
 
 const routeFilter = ref('')
 const dateFilter = ref('')
 const routeMode = ref<'select' | 'create'>('select')
+
+// Pagination
+const currentPage = ref(1)
+const perPage = ref(10)
+const totalSchedules = ref(0)
 
 const scheduleForm = ref({
   route_id: '' as string | number,
@@ -320,25 +350,83 @@ const selectedRoute = computed(() =>
   routes.value.find(r => r.id == scheduleForm.value.route_id) ?? null
 )
 
-// ── Lifecycle ──
-onMounted(() => {
-  fetchSchedules()
-  fetchRoutes()
-  fetchVehicles()
-  fetchCities()
-})
+const totalPages = computed(() => Math.ceil(totalSchedules.value / perPage.value))
+
+const route = useRoute()
+const router = useRouter()
+
+const getPageFromQuery = () => {
+  const rawPage = route.query.page
+  const pageNumber = Number(Array.isArray(rawPage) ? rawPage[0] : rawPage)
+  return Number.isInteger(pageNumber) && pageNumber > 0 ? pageNumber : 1
+}
+
+const updatePageQuery = (page: number) => {
+  router.replace({
+    query: {
+      ...route.query,
+      page: String(page)
+    }
+  })
+}
+
+watch(
+  () => route.query.page,
+  () => {
+    const nextPage = getPageFromQuery()
+    if (nextPage !== currentPage.value) {
+      currentPage.value = nextPage
+      fetchSchedules()
+    }
+  }
+)
 
 // ── Fetch helpers ──
+const fetchWithCache = async (key: string, url: string) => {
+  const cached = sessionStorage.getItem(key)
+  if (cached) {
+    try {
+      return JSON.parse(cached)
+    } catch {
+      sessionStorage.removeItem(key)
+    }
+  }
+
+  const res = await api.get(url)
+  const data = res.data.data || []
+  sessionStorage.setItem(key, JSON.stringify(data))
+  return data
+}
+
+const debounceFetch = () => {
+  clearTimeout(timeout)
+  timeout = setTimeout(() => {
+    fetchSchedules()
+  }, 300)
+}
+
 const fetchSchedules = async () => {
+  if (controller) controller.abort()
+  controller = new AbortController()
+
   loading.value = true
   try {
-    const params: Record<string, any> = {}
+    const params: Record<string, any> = {
+      page: currentPage.value,
+      limit: perPage.value
+    }
     if (routeFilter.value) params.route_id = routeFilter.value
     if (dateFilter.value) params.travel_date = dateFilter.value
-    const res = await api.get('/schedules', { params })
+    const res = await api.get('/schedules', {
+      params,
+      signal: controller.signal
+    })
     schedules.value = res.data.data || []
-  } catch {
-    toast({ title: 'Gagal memuat jadwal', variant: 'destructive' })
+    totalSchedules.value = res.data.total || 0
+  } catch (e: any) {
+    if (e.name !== 'CanceledError') {
+      toast({ title: 'Gagal memuat jadwal', variant: 'destructive' })
+    }
   } finally {
     loading.value = false
   }
@@ -346,24 +434,55 @@ const fetchSchedules = async () => {
 
 const fetchRoutes = async () => {
   try {
-    const res = await api.get('/routes')
-    routes.value = res.data.data || []
+    routes.value = await fetchWithCache('routes', '/routes')
   } catch {}
 }
 
 const fetchVehicles = async () => {
   try {
-    const res = await api.get('/vehicles')
-    vehicles.value = res.data.data || []
+    vehicles.value = await fetchWithCache('vehicles', '/vehicles')
   } catch {}
 }
 
 const fetchCities = async () => {
   try {
-    const res = await api.get('/cities')
-    cities.value = res.data.data || []
+    cities.value = await fetchWithCache('cities', '/cities')
   } catch {}
 }
+
+const fetchInitialData = async () => {
+  try {
+    const res = await api.get('/schedules/init', {
+      params: {
+        page: currentPage.value,
+        limit: perPage.value
+      }
+    })
+
+    schedules.value = res.data.schedules || []
+    totalSchedules.value = res.data.total || 0
+    routes.value = res.data.routes || []
+    vehicles.value = res.data.vehicles || []
+    cities.value = res.data.cities || []
+
+    sessionStorage.setItem('routes', JSON.stringify(routes.value))
+    sessionStorage.setItem('vehicles', JSON.stringify(vehicles.value))
+    sessionStorage.setItem('cities', JSON.stringify(cities.value))
+
+    return true
+  } catch {
+    return false
+  }
+}
+
+// ── Lifecycle ──
+onMounted(async () => {
+  currentPage.value = getPageFromQuery()
+  const initLoaded = await fetchInitialData()
+  if (!initLoaded) {
+    await Promise.all([fetchSchedules(), fetchRoutes()])
+  }
+})
 
 const loadOriginTerminals = async () => {
   originTerminals.value = []
@@ -386,28 +505,14 @@ const loadDestinationTerminals = async () => {
 }
 
 // ── Dialog helpers ──
-const openScheduleDialog = () => {
-  isEdit.value = false
-  selectedSchedule.value = null
+const openScheduleDialog = async () => {
   scheduleForm.value = { route_id: '', vehicle_id: '', travel_date: '', departure_time: '', arrival_time: '', price: 0 }
   routeMode.value = 'select'
   resetNewRoute()
   showScheduleDialog.value = true
-}
 
-const editSchedule = (schedule: any) => {
-  isEdit.value = true
-  selectedSchedule.value = schedule
-  scheduleForm.value = {
-    route_id: schedule.route_id,
-    vehicle_id: schedule.vehicle_id,
-    travel_date: schedule.travel_date?.split('T')[0] ?? '',
-    departure_time: schedule.departure_time?.substring(0, 5) ?? '',
-    arrival_time: schedule.arrival_time?.substring(0, 5) ?? '',
-    price: Number(schedule.price)
-  }
-  routeMode.value = 'select'
-  showScheduleDialog.value = true
+  if (!cities.value.length) await fetchCities()
+  if (!vehicles.value.length) await fetchVehicles()
 }
 
 const toggleRouteMode = () => {
@@ -424,6 +529,14 @@ const resetNewRoute = () => {
 const clearFilters = () => {
   routeFilter.value = ''
   dateFilter.value = ''
+  currentPage.value = 1
+  updatePageQuery(1)
+  fetchSchedules()
+}
+
+const changePage = (page: number) => {
+  currentPage.value = page
+  updatePageQuery(page)
   fetchSchedules()
 }
 
@@ -476,16 +589,9 @@ const submitSchedule = async () => {
       departure_time: formatTime(scheduleForm.value.departure_time),
       arrival_time: formatTime(scheduleForm.value.arrival_time)
     }
-    if (isEdit.value) {
-      await api.put(`/schedules/${selectedSchedule.value.id}`, payload)
-      toast({ title: 'Berhasil', description: 'Jadwal diperbarui' })
-    } else {
-      await api.post('/schedules', payload)
-      toast({ title: 'Berhasil', description: 'Jadwal ditambahkan' })
-    }
+    await api.post('/schedules', payload)
+    toast({ title: 'Berhasil', description: 'Jadwal ditambahkan' })
     showScheduleDialog.value = false
-    isEdit.value = false
-    selectedSchedule.value = null
     fetchSchedules()
   } catch (e: any) {
     toast({ title: 'Error', description: e.response?.data?.message || 'Gagal menyimpan', variant: 'destructive' })
